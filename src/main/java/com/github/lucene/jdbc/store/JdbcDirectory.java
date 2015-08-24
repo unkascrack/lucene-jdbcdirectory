@@ -30,6 +30,12 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.Lock;
 
+import com.github.lucene.jdbc.store.dialect.Dialect;
+import com.github.lucene.jdbc.store.dialect.DialectResolver;
+import com.github.lucene.jdbc.store.handler.FileEntryHandler;
+import com.github.lucene.jdbc.store.support.JdbcTable;
+import com.github.lucene.jdbc.store.support.JdbcTemplate;
+
 /**
  * A Jdbc based implementation of a Lucene <code>Directory</code> allowing the storage of a Lucene index within a
  * database. Uses a jdbc <code>DataSource</code>, {@link org.apache.lucene.store.jdbc.dialect.Dialect} specific for the
@@ -240,5 +246,25 @@ public class JdbcDirectory extends Directory {
     public void sync(final Collection<String> names) throws IOException {
         // TODO Auto-generated method stub
 
+    }
+
+    public Dialect getDialect() {
+        return dialect;
+    }
+
+    public JdbcTemplate getJdbcTemplate() {
+        return jdbcTemplate;
+    }
+
+    public JdbcTable getTable() {
+        return table;
+    }
+
+    public JdbcDirectorySettings getSettings() {
+        return settings;
+    }
+
+    public DataSource getDataSource() {
+        return dataSource;
     }
 }
