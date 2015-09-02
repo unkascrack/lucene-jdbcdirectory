@@ -18,33 +18,37 @@ package com.github.lucene.jdbc.store.handler;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;
-import java.util.Iterator;
 import java.util.List;
 
-import org.apache.lucene.store.jdbc.support.JdbcTemplate;
+import com.github.lucene.jdbc.store.support.JdbcTemplate;
 
 /**
- * Removes file entries from the database by deleting the relevant rows from the database.
+ * Removes file entries from the database by deleting the relevant rows from the
+ * database.
  *
  * @author kimchy
  */
 public class ActualDeleteFileEntryHandler extends AbstractFileEntryHandler {
 
+    @Override
     public void deleteFile(final String name) throws IOException {
         jdbcTemplate.executeUpdate(table.sqlDeleteByName(), new JdbcTemplate.PrepateStatementAwareCallback() {
-            public void fillPrepareStatement(PreparedStatement ps) throws Exception {
+            @Override
+            public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
                 ps.setFetchSize(1);
                 ps.setString(1, name);
             }
         });
     }
 
-    public List deleteFiles(final List names) throws IOException {
+    @Override
+    public List<String> deleteFiles(final List<String> names) throws IOException {
         jdbcTemplate.executeBatch(table.sqlDeleteByName(), new JdbcTemplate.PrepateStatementAwareCallback() {
-            public void fillPrepareStatement(PreparedStatement ps) throws Exception {
+            @Override
+            public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
                 ps.setFetchSize(1);
-                for (Iterator it = names.iterator(); it.hasNext();) {
-                    ps.setString(1, (String) it.next());
+                for (final String name : names) {
+                    ps.setString(1, name);
                 }
             }
         });

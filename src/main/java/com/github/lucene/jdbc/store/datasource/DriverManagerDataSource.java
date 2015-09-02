@@ -23,17 +23,21 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
 
 /**
- * Simple implementation of the standard JDBC DataSource interface, configuring a plain old JDBC Driver via bean
- * properties, and returning a new Connection for every <code>getConnection</code> call.
+ * Simple implementation of the standard JDBC DataSource interface, configuring
+ * a plain old JDBC Driver via bean properties, and returning a new Connection
+ * for every <code>getConnection</code> call.
  * <p/>
- * Useful for test or standalone environments outside of a J2EE container. Pool-assuming <code>Connection.close()</code>
- * calls will simply close the Connection, so any DataSource-aware persistence code should work.
+ * Useful for test or standalone environments outside of a J2EE container.
+ * Pool-assuming <code>Connection.close()</code> calls will simply close the
+ * Connection, so any DataSource-aware persistence code should work.
  * <p/>
- * In a J2EE container, it is recommended to use a JNDI DataSource provided by the container.
+ * In a J2EE container, it is recommended to use a JNDI DataSource provided by
+ * the container.
  * <p/>
- * If you need a "real" connection pool outside of a J2EE container, consider <a
- * href="http://jakarta.apache.org/commons/dbcp">Apache's Jakarta Commons DBCP</a>. Its BasicDataSource is a full
- * connection pool bean, supporting the same basic properties as this class plus specific settings.
+ * If you need a "real" connection pool outside of a J2EE container, consider
+ * <a href="http://jakarta.apache.org/commons/dbcp">Apache's Jakarta Commons
+ * DBCP</a>. Its BasicDataSource is a full connection pool bean, supporting the
+ * same basic properties as this class plus specific settings.
  * <p/>
  * Note, autoCommit property defaults to <code>false<code>.
  *
@@ -58,7 +62,8 @@ public class DriverManagerDataSource extends AbstractDataSource {
     }
 
     /**
-     * Create a new DriverManagerDataSource with the given standard DriverManager parameters.
+     * Create a new DriverManagerDataSource with the given standard
+     * DriverManager parameters.
      *
      * @param driverClassName
      *            the JDBC driver class name
@@ -69,7 +74,8 @@ public class DriverManagerDataSource extends AbstractDataSource {
      * @param password
      *            the JDBC password to use for accessing the DriverManager
      * @param autoCommit
-     *            the default autoCommit value that will be set to created connections
+     *            the default autoCommit value that will be set to created
+     *            connections
      * @see java.sql.DriverManager#getConnection(String, String, String)
      */
     public DriverManagerDataSource(final String driverClassName, final String url, final String username,
@@ -82,7 +88,8 @@ public class DriverManagerDataSource extends AbstractDataSource {
     }
 
     /**
-     * Create a new DriverManagerDataSource with the given standard DriverManager parameters.
+     * Create a new DriverManagerDataSource with the given standard
+     * DriverManager parameters.
      * <p/>
      * Note, the autoCommit will default to <code>false</code>.
      *
@@ -101,8 +108,8 @@ public class DriverManagerDataSource extends AbstractDataSource {
     }
 
     /**
-     * Create a new DriverManagerDataSource with the given JDBC URL, not specifying a username or password for JDBC
-     * access.
+     * Create a new DriverManagerDataSource with the given JDBC URL, not
+     * specifying a username or password for JDBC access.
      *
      * @param url
      *            the JDBC URL to use for accessing the DriverManager
@@ -113,10 +120,11 @@ public class DriverManagerDataSource extends AbstractDataSource {
     }
 
     /**
-     * Set the JDBC driver class name. This driver will get initialized on startup, registering itself with the JDK's
-     * DriverManager.
+     * Set the JDBC driver class name. This driver will get initialized on
+     * startup, registering itself with the JDK's DriverManager.
      * <p/>
-     * Alternatively, consider initializing the JDBC driver yourself before instantiating this DataSource.
+     * Alternatively, consider initializing the JDBC driver yourself before
+     * instantiating this DataSource.
      *
      * @see Class#forName(String)
      * @see java.sql.DriverManager#registerDriver(java.sql.Driver)
@@ -200,8 +208,9 @@ public class DriverManagerDataSource extends AbstractDataSource {
     }
 
     /**
-     * This implementation delegates to <code>getConnectionFromDriverManager</code>, using the default username and
-     * password of this DataSource.
+     * This implementation delegates to
+     * <code>getConnectionFromDriverManager</code>, using the default username
+     * and password of this DataSource.
      *
      * @see #getConnectionFromDriverManager()
      */
@@ -211,7 +220,8 @@ public class DriverManagerDataSource extends AbstractDataSource {
     }
 
     /**
-     * This implementation delegates to <code>getConnectionFromDriverManager</code>, using the given username and
+     * This implementation delegates to
+     * <code>getConnectionFromDriverManager</code>, using the given username and
      * password.
      *
      * @see #getConnectionFromDriverManager(String, String, String)
@@ -222,7 +232,8 @@ public class DriverManagerDataSource extends AbstractDataSource {
     }
 
     /**
-     * Get a Connection from the DriverManager, using the default username and password of this DataSource.
+     * Get a Connection from the DriverManager, using the default username and
+     * password of this DataSource.
      *
      * @see #getConnectionFromDriverManager(String, String, String)
      */
@@ -231,8 +242,8 @@ public class DriverManagerDataSource extends AbstractDataSource {
     }
 
     /**
-     * Getting a connection using the nasty static from DriverManager is extracted into a protected method to allow for
-     * easy unit testing.
+     * Getting a connection using the nasty static from DriverManager is
+     * extracted into a protected method to allow for easy unit testing.
      * <p/>
      * Note, that it sets the auto commit to false
      *

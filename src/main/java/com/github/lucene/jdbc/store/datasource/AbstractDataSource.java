@@ -22,7 +22,8 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 
 /**
- * Abstract base class for Spring's DataSource implementations, taking care of the "uninteresting" glue.
+ * Abstract base class for Spring's DataSource implementations, taking care of
+ * the "uninteresting" glue.
  *
  * @author kimchy
  */

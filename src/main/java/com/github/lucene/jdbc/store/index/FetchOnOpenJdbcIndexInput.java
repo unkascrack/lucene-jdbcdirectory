@@ -29,8 +29,8 @@ import com.github.lucene.jdbc.store.JdbcStoreException;
 import com.github.lucene.jdbc.store.support.JdbcTemplate;
 
 /**
- * An <code>IndexInput</code> implementation that will read all the relevant data from the
- * database when created, and will cache it untill it is closed.
+ * An <code>IndexInput</code> implementation that will read all the relevant
+ * data from the database when created, and will cache it untill it is closed.
  * <p/>
  * Used for small file entries in the database like the segments file.
  *
@@ -38,8 +38,13 @@ import com.github.lucene.jdbc.store.support.JdbcTemplate;
  */
 public class FetchOnOpenJdbcIndexInput extends IndexInput implements JdbcIndexConfigurable {
 
-    //There is no synchronizaiton since Lucene RAMDirecoty performs no synchronizations.
+    // There is no synchronizaiton since Lucene RAMDirecoty performs no
+    // synchronizations.
     // Need to get to the bottom of it.
+
+    protected FetchOnOpenJdbcIndexInput() {
+        super("FetchOnOpenJdbcIndexInput");
+    }
 
     private int length;
 
@@ -47,21 +52,26 @@ public class FetchOnOpenJdbcIndexInput extends IndexInput implements JdbcIndexCo
 
     private byte[] data;
 
-    public void configure(final String name, final JdbcDirectory jdbcDirectory, JdbcFileEntrySettings settings) throws IOException {
+    @Override
+    public void configure(final String name, final JdbcDirectory jdbcDirectory, final JdbcFileEntrySettings settings)
+            throws IOException {
         jdbcDirectory.getJdbcTemplate().executeSelect(jdbcDirectory.getTable().sqlSelectSizeValueByName(),
                 new JdbcTemplate.ExecuteSelectCallback() {
-                    public void fillPrepareStatement(PreparedStatement ps) throws Exception {
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
                         ps.setFetchSize(1);
                         ps.setString(1, name);
                     }
 
-                    public Object execute(ResultSet rs) throws Exception {
+                    @Override
+                    public Object execute(final ResultSet rs) throws Exception {
                         if (!rs.next()) {
-                            throw new JdbcStoreException("No entry for [" + name + "] table " + jdbcDirectory.getTable());
+                            throw new JdbcStoreException(
+                                    "No entry for [" + name + "] table " + jdbcDirectory.getTable());
                         }
                         length = rs.getInt(3);
 
-                        Blob blob = rs.getBlob(2);
+                        final Blob blob = rs.getBlob(2);
                         data = blob.getBytes(1, length);
                         if (data.length != length) {
                             throw new IOException("read past EOF");
@@ -71,28 +81,40 @@ public class FetchOnOpenJdbcIndexInput extends IndexInput implements JdbcIndexCo
                 });
     }
 
+    @Override
     public byte readByte() throws IOException {
         return data[position++];
     }
 
-    public void readBytes(byte[] b, int offset, int len) throws IOException {
+    @Override
+    public void readBytes(final byte[] b, final int offset, final int len) throws IOException {
         System.arraycopy(data, position, b, offset, len);
         position += len;
     }
 
+    @Override
     public void close() throws IOException {
 
     }
 
+    @Override
     public long getFilePointer() {
         return position;
     }
 
-    public void seek(long pos) throws IOException {
+    @Override
+    public void seek(final long pos) throws IOException {
         position = (int) pos;
     }
 
+    @Override
     public long length() {
-        return this.length;
+        return length;
+    }
+
+    @Override
+    public IndexInput slice(final String sliceDescription, final long offset, final long length) throws IOException {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

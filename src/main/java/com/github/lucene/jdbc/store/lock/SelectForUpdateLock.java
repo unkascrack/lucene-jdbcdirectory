@@ -31,15 +31,19 @@ import com.github.lucene.jdbc.store.support.JdbcTemplate;
 /**
  * A lock based on select...for update.
  * <p/>
- * Note, that not all databases support select ... for update, if the database (dialect) does not support it,
- * a exception will be thrown (see {@link org.apache.lucene.store.jdbc.dialect.Dialect#supportsForUpdate()} .
+ * Note, that not all databases support select ... for update, if the database
+ * (dialect) does not support it, a exception will be thrown (see
+ * {@link org.apache.lucene.store.jdbc.dialect.Dialect#supportsForUpdate()} .
  * <p/>
- * Also note, that when using select for update locking, when the database is created, the commit and write
- * locks will be created and the select for update will be performed on them. If one wishes to switch to
- * {@link org.apache.lucene.store.jdbc.lock.PhantomReadLock}, they must be manually deleted.
+ * Also note, that when using select for update locking, when the database is
+ * created, the commit and write locks will be created and the select for update
+ * will be performed on them. If one wishes to switch to
+ * {@link org.apache.lucene.store.jdbc.lock.PhantomReadLock}, they must be
+ * manually deleted.
  * <p/>
- * The lock is released when the transaction is committed, and not when the release method is called.
-
+ * The lock is released when the transaction is committed, and not when the
+ * release method is called.
+ *
  * @author kimchy
  */
 public class SelectForUpdateLock extends Lock implements JdbcLock {
@@ -48,18 +52,22 @@ public class SelectForUpdateLock extends Lock implements JdbcLock {
 
     private String name;
 
-    public void configure(JdbcDirectory jdbcDirectory, String name) throws IOException {
+    @Override
+    public void configure(final JdbcDirectory jdbcDirectory, final String name) throws IOException {
         if (!jdbcDirectory.getDialect().supportsForUpdate()) {
-            throw new JdbcStoreException("Database dialect [" + jdbcDirectory.getDialect() + "] does not support select for update");
+            throw new JdbcStoreException(
+                    "Database dialect [" + jdbcDirectory.getDialect() + "] does not support select for update");
         }
         this.jdbcDirectory = jdbcDirectory;
         this.name = name;
     }
 
-    public void initializeDatabase(JdbcDirectory jdbcDirectory) throws IOException {
+    @Override
+    public void initializeDatabase(final JdbcDirectory jdbcDirectory) throws IOException {
         jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlInsert(),
                 new JdbcTemplate.PrepateStatementAwareCallback() {
-                    public void fillPrepareStatement(PreparedStatement ps) throws Exception {
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
                         ps.setFetchSize(1);
                         ps.setString(1, IndexWriter.WRITE_LOCK_NAME);
                         ps.setNull(2, Types.BLOB);
@@ -71,23 +79,25 @@ public class SelectForUpdateLock extends Lock implements JdbcLock {
 
     public boolean obtain() {
         try {
-            return ((Boolean) jdbcDirectory.getJdbcTemplate().executeSelect(jdbcDirectory.getTable().sqlSelectNameForUpdateNoWait(),
-                    new JdbcTemplate.ExecuteSelectCallback() {
+            return ((Boolean) jdbcDirectory.getJdbcTemplate().executeSelect(
+                    jdbcDirectory.getTable().sqlSelectNameForUpdateNoWait(), new JdbcTemplate.ExecuteSelectCallback() {
 
-                public void fillPrepareStatement(PreparedStatement ps) throws Exception {
-                    ps.setFetchSize(1);
-                    ps.setString(1, name);
-                }
+                        @Override
+                        public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                            ps.setFetchSize(1);
+                            ps.setString(1, name);
+                        }
 
-                public Object execute(ResultSet rs) throws Exception {
-                    if (!rs.next()) {
-                        System.err.println("Should not happen, the lock [" + name + "] should already exists");
-                        return Boolean.FALSE;
-                    }
-                    return Boolean.TRUE;
-                }
-            })).booleanValue();
-        } catch (Exception e) {
+                        @Override
+                        public Object execute(final ResultSet rs) throws Exception {
+                            if (!rs.next()) {
+                                System.err.println("Should not happen, the lock [" + name + "] should already exists");
+                                return Boolean.FALSE;
+                            }
+                            return Boolean.TRUE;
+                        }
+                    })).booleanValue();
+        } catch (final Exception e) {
             return false;
         }
     }
@@ -102,8 +112,21 @@ public class SelectForUpdateLock extends Lock implements JdbcLock {
         throw new IllegalStateException("SelectForUpdate lock does not support is locked");
     }
 
+    @Override
     public String toString() {
         return "SelectForUpdateLock[" + name + "/" + jdbcDirectory.getTable() + "]";
+    }
+
+    @Override
+    public void close() throws IOException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void ensureValid() throws IOException {
+        // TODO Auto-generated method stub
+
     }
 
 }

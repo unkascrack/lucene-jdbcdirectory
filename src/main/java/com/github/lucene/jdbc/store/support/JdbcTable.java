@@ -22,16 +22,16 @@ import com.github.lucene.jdbc.store.JdbcDirectorySettings;
 import com.github.lucene.jdbc.store.dialect.Dialect;
 
 /**
- * An internal representation of a database table used to store the {@link org.apache.lucene.store.jdbc.JdbcDirectory}
- * settings.
+ * An internal representation of a database table used to store the
+ * {@link org.apache.lucene.store.jdbc.JdbcDirectory} settings.
  *
  * @author kimchy
  */
 public class JdbcTable {
 
-    private Dialect dialect;
+    private final Dialect dialect;
 
-    private JdbcDirectorySettings settings;
+    private final JdbcDirectorySettings settings;
 
     private String name;
 
@@ -43,152 +43,156 @@ public class JdbcTable {
 
     private boolean schemaQuoted;
 
-    private String sqlCreate;
-    private String sqlDrop;
-    private String sqlSelectNames;
-    private String sqlSelectNameExists;
-    private String sqlSelecltLastModifiedByName;
-    private String sqlUpdateLastModifiedByName;
-    private String sqlDeleteByName;
-    private String sqlMarkDeleteByName;
-    private String sqlUpdateNameByName;
-    private String sqlSelectSizeByName;
-    private String sqlInsert;
-    private String sqlUpdateSizeLastModifiedByName;
-    private String sqlSelectSizeValueByName;
-    private String sqlDeletaAll;
-    private String sqlDeletaMarkDeleteByDelta;
-    private String sqlSelectNameForUpdateNoWait;
+    private final String sqlCreate;
+    private final String sqlDrop;
+    private final String sqlSelectNames;
+    private final String sqlSelectNameExists;
+    private final String sqlSelecltLastModifiedByName;
+    private final String sqlUpdateLastModifiedByName;
+    private final String sqlDeleteByName;
+    private final String sqlMarkDeleteByName;
+    private final String sqlUpdateNameByName;
+    private final String sqlSelectSizeByName;
+    private final String sqlInsert;
+    private final String sqlUpdateSizeLastModifiedByName;
+    private final String sqlSelectSizeValueByName;
+    private final String sqlDeletaAll;
+    private final String sqlDeletaMarkDeleteByDelta;
+    private final String sqlSelectNameForUpdateNoWait;
 
-    private JdbcColumn nameColumn;
-    private JdbcColumn valueColumn;
-    private JdbcColumn sizeColumn;
-    private JdbcColumn lastModifiedColumn;
-    private JdbcColumn deletedColumn;
+    private final JdbcColumn nameColumn;
+    private final JdbcColumn valueColumn;
+    private final JdbcColumn sizeColumn;
+    private final JdbcColumn lastModifiedColumn;
+    private final JdbcColumn deletedColumn;
 
-    public JdbcTable(JdbcDirectorySettings settings, Dialect dialect, String name) {
+    public JdbcTable(final JdbcDirectorySettings settings, final Dialect dialect, final String name) {
         this(settings, dialect, name, settings.getTableCatalog(), settings.getTableSchema());
     }
 
-    public JdbcTable(JdbcDirectorySettings settings, Dialect dialect, String name, String catalog, String schema) {
+    public JdbcTable(final JdbcDirectorySettings settings, final Dialect dialect, final String name,
+            final String catalog, final String schema) {
         this.dialect = dialect;
         this.settings = settings;
         setName(name);
         setSchema(schema);
         setCatalog(catalog);
-        nameColumn = new JdbcColumn(dialect, settings.getNameColumnName(), 1, dialect.getVarcharType(settings.getNameColumnLength()));
-        valueColumn = new JdbcColumn(dialect, settings.getValueColumnName(), 2, dialect.getBlobType(settings.getValueColumnLengthInK()));
+        nameColumn = new JdbcColumn(dialect, settings.getNameColumnName(), 1,
+                dialect.getVarcharType(settings.getNameColumnLength()));
+        valueColumn = new JdbcColumn(dialect, settings.getValueColumnName(), 2,
+                dialect.getBlobType(settings.getValueColumnLengthInK()));
         sizeColumn = new JdbcColumn(dialect, settings.getSizeColumnName(), 3, dialect.getNumberType());
-        lastModifiedColumn = new JdbcColumn(dialect, settings.getLastModifiedColumnName(), 4, dialect.getTimestampType());
+        lastModifiedColumn = new JdbcColumn(dialect, settings.getLastModifiedColumnName(), 4,
+                dialect.getTimestampType());
         deletedColumn = new JdbcColumn(dialect, settings.getDeletedColumnName(), 5, dialect.getBitType());
 
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
 
-        sqlCreate = sb.append("create table ").append(getQualifiedName()).append(" (")
-                .append(nameColumn.getName()).append(' ').append(nameColumn.getType()).append(" not null, ")
-                .append(valueColumn.getName()).append(' ').append(valueColumn.getType()).append(" , ")
-                .append(sizeColumn.getName()).append(' ').append(sizeColumn.getType()).append(" , ")
-                .append(lastModifiedColumn.getName()).append(' ').append(lastModifiedColumn.getType()).append(" , ")
-                .append(deletedColumn.getName()).append(' ').append(deletedColumn.getType())
-                .append(", " + "primary key (").append(nameColumn.getName()).append(") ) ")
-                .append(getTableTypeString(dialect)).toString();
+        sqlCreate = sb.append("create table ").append(getQualifiedName()).append(" (").append(nameColumn.getName())
+                .append(' ').append(nameColumn.getType()).append(" not null, ").append(valueColumn.getName())
+                .append(' ').append(valueColumn.getType()).append(" , ").append(sizeColumn.getName()).append(' ')
+                .append(sizeColumn.getType()).append(" , ").append(lastModifiedColumn.getName()).append(' ')
+                .append(lastModifiedColumn.getType()).append(" , ").append(deletedColumn.getName()).append(' ')
+                .append(deletedColumn.getType()).append(", " + "primary key (").append(nameColumn.getName())
+                .append(") ) ").append(getTableTypeString(dialect)).toString();
 
         sb.setLength(0);
         sb.append("drop table ");
-        if (dialect.supportsIfExistsBeforeTableName()) sb.append("if exists ");
+        if (dialect.supportsIfExistsBeforeTableName()) {
+            sb.append("if exists ");
+        }
         sb.append(getQualifiedName()).append(dialect.getCascadeConstraintsString());
-        if (dialect.supportsIfExistsAfterTableName()) sb.append(" if exists");
+        if (dialect.supportsIfExistsAfterTableName()) {
+            sb.append(" if exists");
+        }
         sqlDrop = sb.toString();
 
         sb.setLength(0);
-        sqlSelectNames = sb.append("select ").append(nameColumn.getQuotedName())
-                .append(" from ").append(getQualifiedName())
-                .append(" where ").append(deletedColumn.getQuotedName()).append(" = ?").toString();
+        sqlSelectNames = sb.append("select ").append(nameColumn.getQuotedName()).append(" from ")
+                .append(getQualifiedName()).append(" where ").append(deletedColumn.getQuotedName()).append(" = ?")
+                .toString();
 
         sb.setLength(0);
-        sqlSelectNameExists = sb.append("select ").append(deletedColumn.getQuotedName())
-                .append(" from ").append(getQualifiedName())
+        sqlSelectNameExists = sb.append("select ").append(deletedColumn.getQuotedName()).append(" from ")
+                .append(getQualifiedName()).append(" where ").append(nameColumn.getQuotedName()).append(" = ?")
+                .toString();
+
+        sb.setLength(0);
+        sqlSelecltLastModifiedByName = sb.append("select ").append(lastModifiedColumn.getQuotedName()).append(" from ")
+                .append(getQualifiedName()).append(" where ").append(nameColumn.getQuotedName()).append(" = ?")
+                .toString();
+
+        sb.setLength(0);
+        sqlUpdateLastModifiedByName = sb.append("update ").append(getQualifiedName()).append(" set ")
+                .append(lastModifiedColumn.getQuotedName()).append(" = ").append(dialect.getCurrentTimestampFunction())
                 .append(" where ").append(nameColumn.getQuotedName()).append(" = ?").toString();
 
         sb.setLength(0);
-        sqlSelecltLastModifiedByName = sb.append("select ").append(lastModifiedColumn.getQuotedName())
-                .append(" from ").append(getQualifiedName())
-                .append(" where ").append(nameColumn.getQuotedName()).append(" = ?").toString();
+        sqlDeleteByName = sb.append("delete from ").append(getQualifiedName()).append(" where ")
+                .append(nameColumn.getQuotedName()).append(" = ?").toString();
 
         sb.setLength(0);
-        sqlUpdateLastModifiedByName = sb.append("update ").append(getQualifiedName())
-                .append(" set ").append(lastModifiedColumn.getQuotedName()).append(" = ").append(dialect.getCurrentTimestampFunction())
-                .append(" where ").append(nameColumn.getQuotedName()).append(" = ?").toString();
+        sqlDeletaMarkDeleteByDelta = sb.append("delete from ").append(getQualifiedName()).append(" where ")
+                .append(deletedColumn.getQuotedName()).append(" = ?").append(" and ")
+                .append(lastModifiedColumn.getQuotedName()).append(" < ?").toString();
 
         sb.setLength(0);
-        sqlDeleteByName = sb.append("delete from ").append(getQualifiedName())
-                .append(" where ").append(nameColumn.getQuotedName()).append(" = ?").toString();
+        sqlUpdateNameByName = sb.append("update ").append(getQualifiedName()).append(" set ")
+                .append(nameColumn.getQuotedName()).append(" = ?" + " where ").append(nameColumn.getQuotedName())
+                .append(" = ?").toString();
 
         sb.setLength(0);
-        sqlDeletaMarkDeleteByDelta = sb.append("delete from ").append(getQualifiedName())
-                .append(" where ").append(deletedColumn.getQuotedName()).append(" = ?")
-                .append(" and ").append(lastModifiedColumn.getQuotedName()).append(" < ?").toString();
-
-        sb.setLength(0);
-        sqlUpdateNameByName = sb.append("update ").append(getQualifiedName())
-                .append(" set ").append(nameColumn.getQuotedName())
-                .append(" = ?" + " where ").append(nameColumn.getQuotedName()).append(" = ?").toString();
-
-        sb.setLength(0);
-        sqlSelectNameForUpdateNoWait = sb.append("select ").append(nameColumn.getQuotedName())
-                .append(" from ").append(getQualifiedName())
-                .append(" where ").append(nameColumn.getQuotedName()).append(" = ?")
+        sqlSelectNameForUpdateNoWait = sb.append("select ").append(nameColumn.getQuotedName()).append(" from ")
+                .append(getQualifiedName()).append(" where ").append(nameColumn.getQuotedName()).append(" = ?")
                 .append(dialect.getForUpdateNowaitString()).toString();
 
+        sb.setLength(0);
+        sqlSelectSizeByName = sb.append("select ").append(sizeColumn.getQuotedName()).append(" from ")
+                .append(getQualifiedName()).append(" where ").append(nameColumn.getQuotedName()).append(" = ?")
+                .toString();
 
         sb.setLength(0);
-        sqlSelectSizeByName = sb.append("select ").append(sizeColumn.getQuotedName())
-                .append(" from ").append(getQualifiedName())
-                .append(" where ").append(nameColumn.getQuotedName()).append(" = ?").toString();
+        sqlInsert = sb.append("insert into ").append(getQualifiedName()).append(" (").append(nameColumn.getQuotedName())
+                .append(", ").append(valueColumn.getQuotedName()).append(", ").append(sizeColumn.getQuotedName())
+                .append(", ").append(lastModifiedColumn.getQuotedName()).append(", ")
+                .append(deletedColumn.getQuotedName()).append(") values ( ?, ?, ?, ")
+                .append(dialect.getCurrentTimestampFunction()).append(", ?").append(" )").toString();
 
         sb.setLength(0);
-        sqlInsert = sb.append("insert into ").append(getQualifiedName())
-                .append(" (").append(nameColumn.getQuotedName()).append(", ")
-                .append(valueColumn.getQuotedName()).append(", ")
-                .append(sizeColumn.getQuotedName()).append(", ")
-                .append(lastModifiedColumn.getQuotedName()).append(", ")
-                .append(deletedColumn.getQuotedName())
-                .append(") values ( ?, ?, ?, ").append(dialect.getCurrentTimestampFunction()).append(", ?").append(" )").toString();
+        sqlUpdateSizeLastModifiedByName = sb.append("update ").append(getQualifiedName()).append(" set ")
+                .append(sizeColumn.getQuotedName()).append(" = ? , ").append(lastModifiedColumn.getQuotedName())
+                .append(" = ").append(dialect.getCurrentTimestampFunction()).append(" where ")
+                .append(nameColumn.getQuotedName()).append(" = ?").toString();
 
         sb.setLength(0);
-        sqlUpdateSizeLastModifiedByName = sb.append("update ").append(getQualifiedName())
-                .append(" set ").append(sizeColumn.getQuotedName()).append(" = ? , ")
-                .append(lastModifiedColumn.getQuotedName()).append(" = ").append(dialect.getCurrentTimestampFunction())
-                .append(" where ").append(nameColumn.getQuotedName()).append(" = ?").toString();
-
-        sb.setLength(0);
-        sqlMarkDeleteByName = sb.append("update ").append(getQualifiedName())
-                .append(" set ").append(deletedColumn.getQuotedName()).append(" = ? , ")
-                .append(lastModifiedColumn.getQuotedName()).append(" = ").append(dialect.getCurrentTimestampFunction())
-                .append(" where ").append(nameColumn.getQuotedName()).append(" = ?").toString();
+        sqlMarkDeleteByName = sb.append("update ").append(getQualifiedName()).append(" set ")
+                .append(deletedColumn.getQuotedName()).append(" = ? , ").append(lastModifiedColumn.getQuotedName())
+                .append(" = ").append(dialect.getCurrentTimestampFunction()).append(" where ")
+                .append(nameColumn.getQuotedName()).append(" = ?").toString();
 
         sb.setLength(0);
         sqlSelectSizeValueByName = sb.append("select ").append(nameColumn.getQuotedName()).append(", ")
-                .append(dialect.openBlobSelectQuote()).append(valueColumn.getQuotedName()).append(dialect.closeBlobSelectQuote()).append(" as x")
-                .append(", ").append(sizeColumn.getQuotedName())
-                .append(" from ").append(getQualifiedName())
-                .append(" where ").append(nameColumn.getQuotedName()).append(" = ?").toString();
+                .append(dialect.openBlobSelectQuote()).append(valueColumn.getQuotedName())
+                .append(dialect.closeBlobSelectQuote()).append(" as x").append(", ").append(sizeColumn.getQuotedName())
+                .append(" from ").append(getQualifiedName()).append(" where ").append(nameColumn.getQuotedName())
+                .append(" = ?").toString();
 
         sb.setLength(0);
-        sqlDeletaAll = sb.append("delete from ").append(getQualifiedName())
-                .append(" where ").append(nameColumn.getQuotedName()).append(" <> '").append(IndexWriter.WRITE_LOCK_NAME).append("'")
+        sqlDeletaAll = sb.append("delete from ").append(getQualifiedName()).append(" where ")
+                .append(nameColumn.getQuotedName()).append(" <> '").append(IndexWriter.WRITE_LOCK_NAME).append("'")
                 .toString();
     }
 
-    private String getTableTypeString(Dialect dialect) {
+    private String getTableTypeString(final Dialect dialect) {
         String tableType = settings.getTableType();
 
-        if (tableType == null || tableType.length() == 0)
+        if (tableType == null || tableType.length() == 0) {
             tableType = dialect.getTableTypeString();
+        }
         return tableType;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         if (name.charAt(0) == dialect.openQuote()) {
             quoted = true;
             this.name = name.substring(1, name.length() - 1).replace('-', '_');
@@ -201,7 +205,7 @@ public class JdbcTable {
         return name;
     }
 
-    public void setSchema(String schema) {
+    public void setSchema(final String schema) {
         if (schema != null && schema.charAt(0) == dialect.openQuote()) {
             schemaQuoted = true;
             this.schema = schema.substring(1, schema.length() - 1);
@@ -214,33 +218,32 @@ public class JdbcTable {
         return schema;
     }
 
-
     public String getCatalog() {
         return catalog;
     }
 
-    public void setCatalog(String catalog) {
+    public void setCatalog(final String catalog) {
         this.catalog = catalog;
     }
 
     public JdbcColumn getNameColumn() {
-        return this.nameColumn;
+        return nameColumn;
     }
 
     public JdbcColumn getSizeColumn() {
-        return this.sizeColumn;
+        return sizeColumn;
     }
 
     public JdbcColumn getValueColumn() {
-        return this.valueColumn;
+        return valueColumn;
     }
 
     public JdbcColumn getLastModifiedColumn() {
-        return this.lastModifiedColumn;
+        return lastModifiedColumn;
     }
 
     public JdbcColumn getDeletedColumn() {
-        return this.deletedColumn;
+        return deletedColumn;
     }
 
     public String sqlSelectNames() {
@@ -308,27 +311,23 @@ public class JdbcTable {
     }
 
     public String getQualifiedName() {
-        String quotedName = getQuotedName();
+        final String quotedName = getQuotedName();
         return qualify(catalog, getQuotedSchema(), quotedName);
     }
 
     public String getQuotedName() {
-        return quoted ?
-                dialect.openQuote() + name + dialect.closeQuote() :
-                name;
+        return quoted ? dialect.openQuote() + name + dialect.closeQuote() : name;
     }
 
     public String getQuotedSchema() {
         if (schema == null) {
             return null;
         }
-        return schemaQuoted ?
-                dialect.openQuote() + schema + dialect.closeQuote() :
-                schema;
+        return schemaQuoted ? dialect.openQuote() + schema + dialect.closeQuote() : schema;
     }
 
-    public static String qualify(String catalog, String schema, String table) {
-        StringBuffer qualifiedName = new StringBuffer();
+    public static String qualify(final String catalog, final String schema, final String table) {
+        final StringBuffer qualifiedName = new StringBuffer();
         if (catalog != null) {
             qualifiedName.append(catalog).append('.');
         }
@@ -338,10 +337,15 @@ public class JdbcTable {
         return qualifiedName.append(table).toString();
     }
 
+    @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer();
-        if (getCatalog() != null) buf.append(getCatalog()).append(".");
-        if (getSchema() != null) buf.append(getSchema()).append(".");
+        final StringBuffer buf = new StringBuffer();
+        if (getCatalog() != null) {
+            buf.append(getCatalog()).append(".");
+        }
+        if (getSchema() != null) {
+            buf.append(getSchema()).append(".");
+        }
         buf.append(getName());
         return buf.toString();
     }
@@ -351,6 +355,6 @@ public class JdbcTable {
     }
 
     public Dialect getDialect() {
-        return this.dialect;
+        return dialect;
     }
 }

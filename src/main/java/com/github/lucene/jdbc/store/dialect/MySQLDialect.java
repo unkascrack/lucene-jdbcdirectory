@@ -24,7 +24,8 @@ package com.github.lucene.jdbc.store.dialect;
 public class MySQLDialect extends Dialect {
 
     /**
-     * MySQL requires quoting the blob column with connector J 3.1 when using emulateLocators=true.
+     * MySQL requires quoting the blob column with connector J 3.1 when using
+     * emulateLocators=true.
      */
     @Override
     public String openBlobSelectQuote() {
@@ -32,7 +33,8 @@ public class MySQLDialect extends Dialect {
     }
 
     /**
-     * MySQL requires quoting the blob column with connector J 3.1 when using emulateLocators=true.
+     * MySQL requires quoting the blob column with connector J 3.1 when using
+     * emulateLocators=true.
      */
     @Override
     public String closeBlobSelectQuote() {

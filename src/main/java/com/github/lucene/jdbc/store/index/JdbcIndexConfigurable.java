@@ -22,20 +22,25 @@ import com.github.lucene.jdbc.store.JdbcDirectory;
 import com.github.lucene.jdbc.store.JdbcFileEntrySettings;
 
 /**
- * An additional interface that each implementation of <code>IndexInput</code> and <code>IndexOutput</code>
- * must implement. Used to configure newly created <code>IndexInput</code> and <code>IndexOutput</code>
- * Jdbc based implementation.
+ * An additional interface that each implementation of <code>IndexInput</code>
+ * and <code>IndexOutput</code> must implement. Used to configure newly created
+ * <code>IndexInput</code> and <code>IndexOutput</code> Jdbc based
+ * implementation.
  *
  * @author kimchy
  */
 public interface JdbcIndexConfigurable {
 
     /**
-     * Configures the newly created <code>IndexInput</code> or <code>IndexOutput</code> implementations.
+     * Configures the newly created <code>IndexInput</code> or
+     * <code>IndexOutput</code> implementations.
      *
-     * @param name The name of the file entry
-     * @param jdbcDirectory The jdbc directory instance
-     * @param settings The relevant file entry settings
+     * @param name
+     *            The name of the file entry
+     * @param jdbcDirectory
+     *            The jdbc directory instance
+     * @param settings
+     *            The relevant file entry settings
      * @throws java.io.IOException
      */
     void configure(String name, JdbcDirectory jdbcDirectory, JdbcFileEntrySettings settings) throws IOException;

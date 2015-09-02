@@ -62,7 +62,8 @@ public class DialectResolver {
 
         private final Class<? extends Dialect> dialect;
 
-        public DatabaseNameStartsWithToDialectMapper(final String databaseName, final Class<? extends Dialect> dialect) {
+        public DatabaseNameStartsWithToDialectMapper(final String databaseName,
+                final Class<? extends Dialect> dialect) {
             this.databaseName = databaseName;
             this.dialect = dialect;
         }
@@ -93,7 +94,8 @@ public class DialectResolver {
 
         @Override
         public Class<? extends Dialect> getDialect(final DatabaseMetaData metaData) throws SQLException {
-            if (metaData.getDatabaseProductName().equals(databaseName) && metaData.getDatabaseMajorVersion() == version) {
+            if (metaData.getDatabaseProductName().equals(databaseName)
+                    && metaData.getDatabaseMajorVersion() == version) {
                 return dialect;
             }
             return null;

@@ -26,62 +26,68 @@ import com.github.lucene.jdbc.store.JdbcDirectorySettings;
 public abstract class Dialect {
 
     /**
-     * Process settings and apply any dialect related changes. Defaults to do nothing.
+     * Process settings and apply any dialect related changes. Defaults to do
+     * nothing.
      */
     public void processSettings(final JdbcDirectorySettings settings) {
 
     }
 
     /**
-     * Does the database (or the jdbc driver) supports transactional blob. Is so, can be used with the
-     * {@link org.apache.lucene.store.jdbc.index.FetchPerTransactionJdbcIndexInput}. Defaults to <code>false</code>.
+     * Does the database (or the jdbc driver) supports transactional blob. Is
+     * so, can be used with the
+     * {@link org.apache.lucene.store.jdbc.index.FetchPerTransactionJdbcIndexInput}
+     * . Defaults to <code>false</code>.
      */
     public boolean supportTransactionalScopedBlobs() {
         return false;
     }
 
     /**
-     * Does the database support "if exists" before the table name when constructing a sql drop for the table. Defaults
-     * to <code>false<code>.
+     * Does the database support "if exists" before the table name when
+     * constructing a sql drop for the table. Defaults to <code>false<code>.
      */
     public boolean supportsIfExistsBeforeTableName() {
         return false;
     }
 
     /**
-     * Does the database support "if exists" after the table name when constructing a sql drop for the table. Defaults
-     * to <code>false</code>.
+     * Does the database support "if exists" after the table name when
+     * constructing a sql drop for the table. Defaults to <code>false</code>.
      */
     public boolean supportsIfExistsAfterTableName() {
         return false;
     }
 
     /**
-     * Does the dialect support a special query to check if a table exists. Defaults to <code>false</code>.
+     * Does the dialect support a special query to check if a table exists.
+     * Defaults to <code>false</code>.
      */
     public boolean supportsTableExists() {
         return false;
     }
 
     /**
-     * If the dialect support a special query to check if a table exists, the actual sql that is used to perform it.
-     * Defaults to throw an Unsupported excetion (see {@link #supportsTableExists()}.
+     * If the dialect support a special query to check if a table exists, the
+     * actual sql that is used to perform it. Defaults to throw an Unsupported
+     * excetion (see {@link #supportsTableExists()}.
      */
     public String sqlTableExists(final String catalog, final String schemaName) {
         throw new UnsupportedOperationException("Not sql provided to define if a table exists");
     }
 
     /**
-     * Does the database require using an <code>InputStream</code> to insert a blob, or the <code>setBlob</code> method.
-     * Defaults to <code>true</code>.
+     * Does the database require using an <code>InputStream</code> to insert a
+     * blob, or the <code>setBlob</code> method. Defaults to <code>true</code>.
      */
     public boolean useInputStreamToInsertBlob() {
         return true;
     }
 
     /**
-     * Do we need to perform a special check to see if the lock already exists in the database, or should we try and
-     * insert it without checking. Defaults to <code>true</code>.
+     * Do we need to perform a special check to see if the lock already exists
+     * in the database, or should we try and insert it without checking.
+     * Defaults to <code>true</code>.
      */
     public boolean useExistsBeforeInsertLock() {
         return true;
@@ -128,15 +134,16 @@ public abstract class Dialect {
     public abstract boolean supportsForUpdate();
 
     /**
-     * Does this dialect support the <code>FOR UPDATE</code> syntax? Defaults to <code> for update</code>.
+     * Does this dialect support the <code>FOR UPDATE</code> syntax? Defaults to
+     * <code> for update</code>.
      */
     public String getForUpdateString() {
         return " for update";
     }
 
     /**
-     * Does this dialect support the Oracle-style <code>FOR UPDATE NOWAIT</code> syntax? Defaults to
-     * {@link #getForUpdateString()}.
+     * Does this dialect support the Oracle-style <code>FOR UPDATE NOWAIT</code>
+     * syntax? Defaults to {@link #getForUpdateString()}.
      */
     public String getForUpdateNowaitString() {
         return getForUpdateString();
@@ -150,7 +157,8 @@ public abstract class Dialect {
     }
 
     /**
-     * Does the database supports a query for the current timestamp. Defaults to <code>false</code>.
+     * Does the database supports a query for the current timestamp. Defaults to
+     * <code>false</code>.
      */
     public boolean supportsCurrentTimestampSelection() {
         return false;
@@ -171,7 +179,8 @@ public abstract class Dialect {
     }
 
     /**
-     * The database current timestamp function that is used with several sql updates.
+     * The database current timestamp function that is used with several sql
+     * updates.
      */
     public abstract String getCurrentTimestampFunction();
 

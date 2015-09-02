@@ -23,36 +23,42 @@ import com.github.lucene.jdbc.store.index.FetchOnBufferReadJdbcIndexInput;
 import com.github.lucene.jdbc.store.index.RAMAndFileJdbcIndexOutput;
 
 /**
- * A file entry level settings. An abstract view of any type of setting that cab be used by the actual file entry
- * handler that uses it.
+ * A file entry level settings. An abstract view of any type of setting that cab
+ * be used by the actual file entry handler that uses it.
  * <p/>
  * Holds the {@link #FILE_ENTRY_HANDLER_TYPE} that defines the type of the
- * {@link org.apache.lucene.store.jdbc.handler.FileEntryHandler} that will be created and initialized with the settings.
+ * {@link org.apache.lucene.store.jdbc.handler.FileEntryHandler} that will be
+ * created and initialized with the settings.
  * <p/>
  * Default values for a new instanciated instnce are:
- * {@link org.apache.lucene.store.jdbc.handler.MarkDeleteFileEntryHandler} for the {@link #FILE_ENTRY_HANDLER_TYPE}
- * setting, {@link org.apache.lucene.store.jdbc.index.FetchOnBufferReadJdbcIndexInput} for the
- * {@link #INDEX_INPUT_TYPE_SETTING} setting, and {@link org.apache.lucene.store.jdbc.index.RAMAndFileJdbcIndexOutput}
- * for the {@link #INDEX_OUTPUT_TYPE_SETTING} setting.
+ * {@link org.apache.lucene.store.jdbc.handler.MarkDeleteFileEntryHandler} for
+ * the {@link #FILE_ENTRY_HANDLER_TYPE} setting,
+ * {@link org.apache.lucene.store.jdbc.index.FetchOnBufferReadJdbcIndexInput}
+ * for the {@link #INDEX_INPUT_TYPE_SETTING} setting, and
+ * {@link org.apache.lucene.store.jdbc.index.RAMAndFileJdbcIndexOutput} for the
+ * {@link #INDEX_OUTPUT_TYPE_SETTING} setting.
  *
  * @author kimchy
  */
 public class JdbcFileEntrySettings {
 
     /**
-     * The class name of the {@link org.apache.lucene.store.IndexInput}. Only applies to
-     * {@link org.apache.lucene.store.jdbc.handler.FileEntryHandler}s that use it.
+     * The class name of the {@link org.apache.lucene.store.IndexInput}. Only
+     * applies to {@link org.apache.lucene.store.jdbc.handler.FileEntryHandler}s
+     * that use it.
      */
     public static final String INDEX_INPUT_TYPE_SETTING = "indexInput.type";
 
     /**
-     * The class name of the {@link org.apache.lucene.store.IndexOutput}. Only applies to
-     * {@link org.apache.lucene.store.jdbc.handler.FileEntryHandler}s that use it.
+     * The class name of the {@link org.apache.lucene.store.IndexOutput}. Only
+     * applies to {@link org.apache.lucene.store.jdbc.handler.FileEntryHandler}s
+     * that use it.
      */
     public static final String INDEX_OUTPUT_TYPE_SETTING = "indexOutput.type";
 
     /**
-     * The class name of the {@link org.apache.lucene.store.jdbc.handler.FileEntryHandler}.
+     * The class name of the
+     * {@link org.apache.lucene.store.jdbc.handler.FileEntryHandler}.
      */
     public static final String FILE_ENTRY_HANDLER_TYPE = "type";
 
@@ -75,7 +81,8 @@ public class JdbcFileEntrySettings {
     }
 
     /**
-     * Returns the value match for the given setting. <code>null</code> if no setting is found.
+     * Returns the value match for the given setting. <code>null</code> if no
+     * setting is found.
      *
      * @param setting
      *            The setting name
@@ -86,7 +93,8 @@ public class JdbcFileEntrySettings {
     }
 
     /**
-     * Returns the value that matches the given setting. If none is found, the default value is used.
+     * Returns the value that matches the given setting. If none is found, the
+     * default value is used.
      *
      * @param setting
      *            The setting name
@@ -99,7 +107,8 @@ public class JdbcFileEntrySettings {
     }
 
     /**
-     * Returns the float value that matches the given setting. If none if found, the default value is used.
+     * Returns the float value that matches the given setting. If none if found,
+     * the default value is used.
      *
      * @param setting
      *            The setting name
@@ -116,7 +125,8 @@ public class JdbcFileEntrySettings {
     }
 
     /**
-     * Returns the int value that matches the given setting. If none if found, the default value is used.
+     * Returns the int value that matches the given setting. If none if found,
+     * the default value is used.
      *
      * @param setting
      *            The setting name
@@ -133,7 +143,8 @@ public class JdbcFileEntrySettings {
     }
 
     /**
-     * Returns the long value that matches the given setting. If none if found, the default value is used.
+     * Returns the long value that matches the given setting. If none if found,
+     * the default value is used.
      *
      * @param setting
      *            The setting name
@@ -150,7 +161,8 @@ public class JdbcFileEntrySettings {
     }
 
     /**
-     * Returns the class value that matches the given setting. If none if found, the default value is used.
+     * Returns the class value that matches the given setting. If none if found,
+     * the default value is used.
      *
      * @param setting
      *            The setting name
@@ -163,7 +175,8 @@ public class JdbcFileEntrySettings {
     }
 
     /**
-     * Returns the class value that matches the given setting. If none if found, the default value is used.
+     * Returns the class value that matches the given setting. If none if found,
+     * the default value is used.
      *
      * @param setting
      *            The setting name
@@ -184,7 +197,8 @@ public class JdbcFileEntrySettings {
     }
 
     /**
-     * Returns the boolean value that matches the given setting. If none if found, the default value is used.
+     * Returns the boolean value that matches the given setting. If none if
+     * found, the default value is used.
      *
      * @param setting
      *            The setting name

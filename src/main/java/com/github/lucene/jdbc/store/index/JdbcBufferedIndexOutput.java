@@ -22,15 +22,16 @@ import com.github.lucene.jdbc.store.JdbcDirectory;
 import com.github.lucene.jdbc.store.JdbcFileEntrySettings;
 
 /**
- * A simple base class that performs index output memory based buffering. The buffer size can be configured under the
- * {@link #BUFFER_SIZE_SETTING} name.
+ * A simple base class that performs index output memory based buffering. The
+ * buffer size can be configured under the {@link #BUFFER_SIZE_SETTING} name.
  *
  * @author kimchy
  */
 public abstract class JdbcBufferedIndexOutput extends ConfigurableBufferedIndexOutput implements JdbcIndexConfigurable {
 
     /**
-     * The buffer size setting name. See {@link JdbcFileEntrySettings#setIntSetting(String,int)}. Should be set in
+     * The buffer size setting name. See
+     * {@link JdbcFileEntrySettings#setIntSetting(String,int)}. Should be set in
      * bytes.
      */
     public static final String BUFFER_SIZE_SETTING = "indexOutput.bufferSize";
@@ -39,6 +40,7 @@ public abstract class JdbcBufferedIndexOutput extends ConfigurableBufferedIndexO
         super(resourceDescription);
     }
 
+    @Override
     public void configure(final String name, final JdbcDirectory jdbcDirectory, final JdbcFileEntrySettings settings)
             throws IOException {
         initBuffer(settings.getSettingAsInt(BUFFER_SIZE_SETTING, DEFAULT_BUFFER_SIZE));

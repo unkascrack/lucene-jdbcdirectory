@@ -28,12 +28,15 @@ import com.github.lucene.jdbc.store.JdbcDirectory;
 import com.github.lucene.jdbc.store.support.JdbcTemplate;
 
 /**
- * <p>A lock based on phantom reads and table level locking. For most database and most transaction
- * isolation levels this lock is suffecient.
+ * <p>
+ * A lock based on phantom reads and table level locking. For most database and
+ * most transaction isolation levels this lock is suffecient.
  *
- * <p>The existance of the lock in the database, marks it as being locked.
+ * <p>
+ * The existance of the lock in the database, marks it as being locked.
  *
- * <p>The benefits of using this lock is the ability to release it.
+ * <p>
+ * The benefits of using this lock is the ability to release it.
  *
  * @author kimchy
  */
@@ -45,20 +48,24 @@ public class PhantomReadLock extends Lock implements JdbcLock {
 
     private String name;
 
-    public void configure(JdbcDirectory jdbcDirectory, String name) throws IOException {
+    @Override
+    public void configure(final JdbcDirectory jdbcDirectory, final String name) throws IOException {
         this.jdbcDirectory = jdbcDirectory;
         this.name = name;
     }
 
-    public void initializeDatabase(JdbcDirectory jdbcDirectory) {
+    @Override
+    public void initializeDatabase(final JdbcDirectory jdbcDirectory) {
         // do nothing
     }
 
     public boolean obtain() {
         try {
             if (jdbcDirectory.getDialect().useExistsBeforeInsertLock()) {
-                // there are databases where the fact that an exception was thrown
-                // invalidates the connection. So first we check if it exists, and
+                // there are databases where the fact that an exception was
+                // thrown
+                // invalidates the connection. So first we check if it exists,
+                // and
                 // then insert it.
                 if (jdbcDirectory.fileExists(name)) {
                     return false;
@@ -66,7 +73,8 @@ public class PhantomReadLock extends Lock implements JdbcLock {
             }
             jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlInsert(),
                     new JdbcTemplate.PrepateStatementAwareCallback() {
-                        public void fillPrepareStatement(PreparedStatement ps) throws Exception {
+                        @Override
+                        public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
                             ps.setFetchSize(1);
                             ps.setString(1, name);
                             ps.setNull(2, Types.BLOB);
@@ -74,7 +82,7 @@ public class PhantomReadLock extends Lock implements JdbcLock {
                             ps.setBoolean(4, false);
                         }
                     });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (log.isTraceEnabled()) {
                 log.trace("Obtain Lock exception (might be valid) [" + e.getMessage() + "]");
             }
@@ -87,12 +95,13 @@ public class PhantomReadLock extends Lock implements JdbcLock {
         try {
             jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlDeleteByName(),
                     new JdbcTemplate.PrepateStatementAwareCallback() {
-                        public void fillPrepareStatement(PreparedStatement ps) throws Exception {
+                        @Override
+                        public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
                             ps.setFetchSize(1);
                             ps.setString(1, name);
                         }
                     });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (log.isTraceEnabled()) {
                 log.trace("Release Lock exception (might be valid) [" + e.getMessage() + "]");
             }
@@ -102,12 +111,25 @@ public class PhantomReadLock extends Lock implements JdbcLock {
     public boolean isLocked() {
         try {
             return jdbcDirectory.fileExists(name);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             return false;
         }
     }
 
+    @Override
     public String toString() {
         return "PhantomReadLock[" + name + "/" + jdbcDirectory.getTable() + "]";
+    }
+
+    @Override
+    public void close() throws IOException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void ensureValid() throws IOException {
+        // TODO Auto-generated method stub
+
     }
 }

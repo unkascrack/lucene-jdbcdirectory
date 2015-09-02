@@ -5,7 +5,8 @@ import java.io.IOException;
 import org.apache.lucene.store.IndexInput;
 
 /**
- * A simple base class that performs index input memory based buffering. Allows the buffer size to be configurable.
+ * A simple base class that performs index input memory based buffering. Allows
+ * the buffer size to be configurable.
  *
  * @author kimchy
  */
@@ -94,11 +95,13 @@ public abstract class ConfigurableBufferedIndexInput extends IndexInput {
             }
             // and now, read the remaining 'len' bytes:
             if (len < bufferSize) {
-                // If the amount left to read is small enough, do it in the usual
+                // If the amount left to read is small enough, do it in the
+                // usual
                 // buffered way: fill the buffer and copy from it:
                 refill();
                 if (bufferLength < len) {
-                    // Throw an exception when refill() could not read len bytes:
+                    // Throw an exception when refill() could not read len
+                    // bytes:
                     System.arraycopy(buffer, 0, b, offset, bufferLength);
                     throw new IOException("read past EOF");
                 } else {
@@ -106,10 +109,14 @@ public abstract class ConfigurableBufferedIndexInput extends IndexInput {
                     bufferPosition = len;
                 }
             } else {
-                // The amount left to read is larger than the buffer - there's no
-                // performance reason not to read it all at once. Note that unlike
-                // the previous code of this function, there is no need to do a seek
-                // here, because there's no need to reread what we had in the buffer.
+                // The amount left to read is larger than the buffer - there's
+                // no
+                // performance reason not to read it all at once. Note that
+                // unlike
+                // the previous code of this function, there is no need to do a
+                // seek
+                // here, because there's no need to reread what we had in the
+                // buffer.
                 final long after = bufferStart + bufferPosition + len;
                 if (after > length()) {
                     throw new IOException("read past EOF");
@@ -144,7 +151,8 @@ public abstract class ConfigurableBufferedIndexInput extends IndexInput {
     }
 
     /**
-     * Expert: implements buffer refill. Reads bytes from the current position in the input.
+     * Expert: implements buffer refill. Reads bytes from the current position
+     * in the input.
      *
      * @param b
      *            the array to read bytes into
@@ -173,8 +181,8 @@ public abstract class ConfigurableBufferedIndexInput extends IndexInput {
     }
 
     /**
-     * Expert: implements seek. Sets current position in this file, where the next {@link #readInternal(byte[],int,int)}
-     * will occur.
+     * Expert: implements seek. Sets current position in this file, where the
+     * next {@link #readInternal(byte[],int,int)} will occur.
      *
      * @see #readInternal(byte[],int,int)
      */

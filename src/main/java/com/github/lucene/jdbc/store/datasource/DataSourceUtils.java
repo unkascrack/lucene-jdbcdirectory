@@ -49,15 +49,17 @@ public abstract class DataSourceUtils {
     }
 
     /**
-     * Returns <code>true</code> if the connection was created by the {@link TransactionAwareDataSourceProxy} and it
-     * controls the connection (i.e. it is the most outer connection created).
+     * Returns <code>true</code> if the connection was created by the
+     * {@link TransactionAwareDataSourceProxy} and it controls the connection
+     * (i.e. it is the most outer connection created).
      */
     public static boolean controlConnection(final Connection connection) {
         return connection instanceof ConnectionProxy && ((ConnectionProxy) connection).controlConnection();
     }
 
     /**
-     * Returns a jdbc connection, and in case of failure, wraps the sql exception with a Jdbc device exception.
+     * Returns a jdbc connection, and in case of failure, wraps the sql
+     * exception with a Jdbc device exception.
      */
     public static Connection getConnection(final DataSource dataSource) throws JdbcStoreException {
         try {
@@ -68,12 +70,14 @@ public abstract class DataSourceUtils {
     }
 
     /**
-     * Close the given JDBC connection and ignore any thrown exception. This is useful for typical finally blocks in
-     * manual JDBC code.
+     * Close the given JDBC connection and ignore any thrown exception. This is
+     * useful for typical finally blocks in manual JDBC code.
      * <p/>
-     * Will only close the connection under two conditions: If the connection was not created by the
-     * {@link TransactionAwareDataSourceProxy}, or if it was created by {@link TransactionAwareDataSourceProxy}, and the
-     * connection controls the connection (i.e. it is the most outer connection created).
+     * Will only close the connection under two conditions: If the connection
+     * was not created by the {@link TransactionAwareDataSourceProxy}, or if it
+     * was created by {@link TransactionAwareDataSourceProxy}, and the
+     * connection controls the connection (i.e. it is the most outer connection
+     * created).
      */
     public static void releaseConnection(final Connection con) {
         if (con == null) {
@@ -91,8 +95,10 @@ public abstract class DataSourceUtils {
     }
 
     /**
-     * Commits the connection only if the connection is controlled by us. The connection is controlled if it is the
-     * <code>TransactionAwareDataSourceProxy</code> and it is the most outer connection in the tree of connections the
+     * Commits the connection only if the connection is controlled by us. The
+     * connection is controlled if it is the
+     * <code>TransactionAwareDataSourceProxy</code> and it is the most outer
+     * connection in the tree of connections the
      * <code>TransactionAwareDataSourceProxy</code> returned.
      */
     public static void commitConnectionIfPossible(final Connection con) throws JdbcStoreException {
@@ -106,7 +112,8 @@ public abstract class DataSourceUtils {
     }
 
     /**
-     * Same as {@link #commitConnectionIfPossible(java.sql.Connection)}, only does not throw an exception
+     * Same as {@link #commitConnectionIfPossible(java.sql.Connection)}, only
+     * does not throw an exception
      */
     public static void safeCommitConnectionIfPossible(final Connection con) {
         try {
@@ -119,8 +126,10 @@ public abstract class DataSourceUtils {
     }
 
     /**
-     * Tollbacks the connection only if the connection is controlled by us. The connection is controlled if it is the
-     * <code>TransactionAwareDataSourceProxy</code> and it is the most outer connection in the tree of connections the
+     * Tollbacks the connection only if the connection is controlled by us. The
+     * connection is controlled if it is the
+     * <code>TransactionAwareDataSourceProxy</code> and it is the most outer
+     * connection in the tree of connections the
      * <code>TransactionAwareDataSourceProxy</code> returned.
      */
     public static void rollbackConnectionIfPossible(final Connection con) throws JdbcStoreException {
@@ -134,7 +143,8 @@ public abstract class DataSourceUtils {
     }
 
     /**
-     * Same as {@link #rollbackConnectionIfPossible(java.sql.Connection)}, only does not throw an exception.
+     * Same as {@link #rollbackConnectionIfPossible(java.sql.Connection)}, only
+     * does not throw an exception.
      */
     public static void safeRollbackConnectionIfPossible(final Connection con) {
         try {
@@ -147,8 +157,8 @@ public abstract class DataSourceUtils {
     }
 
     /**
-     * Close the given JDBC Statement and ignore any thrown exception. This is useful for typical finally blocks in
-     * manual JDBC code.
+     * Close the given JDBC Statement and ignore any thrown exception. This is
+     * useful for typical finally blocks in manual JDBC code.
      *
      * @param stmt
      *            the JDBC Statement to close
@@ -166,8 +176,8 @@ public abstract class DataSourceUtils {
     }
 
     /**
-     * Close the given JDBC ResultSet and ignore any thrown exception. This is useful for typical finally blocks in
-     * manual JDBC code.
+     * Close the given JDBC ResultSet and ignore any thrown exception. This is
+     * useful for typical finally blocks in manual JDBC code.
      *
      * @param rs
      *            the JDBC ResultSet to close
@@ -185,8 +195,9 @@ public abstract class DataSourceUtils {
     }
 
     /**
-     * Returns the column index for the guven column name. Note that if there are two columns with the same name, the
-     * first onde index will be returned.
+     * Returns the column index for the guven column name. Note that if there
+     * are two columns with the same name, the first onde index will be
+     * returned.
      * <p>
      * <code>-1</code> is returned if none is found.
      */
@@ -205,7 +216,8 @@ public abstract class DataSourceUtils {
         if (conn instanceof ConnectionProxy) {
             return getTargetConnection(((ConnectionProxy) conn).getTargetConnection());
         }
-        // currently a hack to suppport Spring wrapping of connections. Need to implement a nicer pluggable native
+        // currently a hack to suppport Spring wrapping of connections. Need to
+        // implement a nicer pluggable native
         // extractor
         if (springConnectionProxy != null && springConnectionProxyClass != null) {
             if (springConnectionProxyClass.isAssignableFrom(conn.getClass())) {

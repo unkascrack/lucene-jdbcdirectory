@@ -23,18 +23,21 @@ import java.sql.Timestamp;
 
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
-import org.apache.lucene.store.jdbc.JdbcDirectory;
-import org.apache.lucene.store.jdbc.JdbcFileEntrySettings;
-import org.apache.lucene.store.jdbc.JdbcStoreException;
-import org.apache.lucene.store.jdbc.index.JdbcIndexConfigurable;
-import org.apache.lucene.store.jdbc.support.JdbcTable;
-import org.apache.lucene.store.jdbc.support.JdbcTemplate;
+
+import com.github.lucene.jdbc.store.JdbcDirectory;
+import com.github.lucene.jdbc.store.JdbcFileEntrySettings;
+import com.github.lucene.jdbc.store.JdbcStoreException;
+import com.github.lucene.jdbc.store.index.JdbcIndexConfigurable;
+import com.github.lucene.jdbc.store.support.JdbcTable;
+import com.github.lucene.jdbc.store.support.JdbcTemplate;
 
 /**
- * A base file entry handler that supports most of the file entry base operations.
+ * A base file entry handler that supports most of the file entry base
+ * operations.
  * <p/>
- * Supports the creation of configurable <code>IndexInput</code> and <code>IndexOutput</code>,
- * base on the {@link JdbcFileEntrySettings#INDEX_INPUT_TYPE_SETTING} and
+ * Supports the creation of configurable <code>IndexInput</code> and
+ * <code>IndexOutput</code>, base on the
+ * {@link JdbcFileEntrySettings#INDEX_INPUT_TYPE_SETTING} and
  * {@link JdbcFileEntrySettings#INDEX_OUTPUT_TYPE_SETTING}.
  * <p/>
  * Does not implement the deletion of files.
@@ -49,59 +52,73 @@ public abstract class AbstractFileEntryHandler implements FileEntryHandler {
 
     protected JdbcTemplate jdbcTemplate;
 
-    public void configure(JdbcDirectory jdbcDirectory) {
+    @Override
+    public void configure(final JdbcDirectory jdbcDirectory) {
         this.jdbcDirectory = jdbcDirectory;
-        this.jdbcTemplate = jdbcDirectory.getJdbcTemplate();
-        this.table = jdbcDirectory.getTable();
+        jdbcTemplate = jdbcDirectory.getJdbcTemplate();
+        table = jdbcDirectory.getTable();
     }
 
+    @Override
     public boolean fileExists(final String name) throws IOException {
-        return ((Boolean) jdbcTemplate.executeSelect(table.sqlSelectNameExists(), new JdbcTemplate.ExecuteSelectCallback() {
-            public void fillPrepareStatement(PreparedStatement ps) throws Exception {
-                ps.setFetchSize(1);
-                ps.setString(1, name);
-            }
+        return ((Boolean) jdbcTemplate.executeSelect(table.sqlSelectNameExists(),
+                new JdbcTemplate.ExecuteSelectCallback() {
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                        ps.setFetchSize(1);
+                        ps.setString(1, name);
+                    }
 
-            public Object execute(ResultSet rs) throws Exception {
-                if (!rs.next()) {
-                    return Boolean.FALSE;
-                }
-                return (rs.getBoolean(1)) ? Boolean.FALSE : Boolean.TRUE;
-            }
-        })).booleanValue();
+                    @Override
+                    public Object execute(final ResultSet rs) throws Exception {
+                        if (!rs.next()) {
+                            return Boolean.FALSE;
+                        }
+                        return rs.getBoolean(1) ? Boolean.FALSE : Boolean.TRUE;
+                    }
+                })).booleanValue();
     }
 
+    @Override
     public long fileModified(final String name) throws IOException {
-        return ((Long) jdbcTemplate.executeSelect(table.sqlSelecltLastModifiedByName(), new JdbcTemplate.ExecuteSelectCallback() {
-            public void fillPrepareStatement(PreparedStatement ps) throws Exception {
-                ps.setFetchSize(1);
-                ps.setString(1, name);
-            }
+        return ((Long) jdbcTemplate.executeSelect(table.sqlSelecltLastModifiedByName(),
+                new JdbcTemplate.ExecuteSelectCallback() {
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                        ps.setFetchSize(1);
+                        ps.setString(1, name);
+                    }
 
-            public Object execute(ResultSet rs) throws Exception {
-                if (rs.next()) {
-                    Timestamp ts = rs.getTimestamp(1);
-                    return new Long(ts.getTime());
-                }
-                return new Long(0L);
-            }
-        })).longValue();
+                    @Override
+                    public Object execute(final ResultSet rs) throws Exception {
+                        if (rs.next()) {
+                            final Timestamp ts = rs.getTimestamp(1);
+                            return new Long(ts.getTime());
+                        }
+                        return new Long(0L);
+                    }
+                })).longValue();
     }
 
+    @Override
     public void touchFile(final String name) throws IOException {
-        jdbcTemplate.executeUpdate(table.sqlUpdateLastModifiedByName(), new JdbcTemplate.PrepateStatementAwareCallback() {
-            public void fillPrepareStatement(PreparedStatement ps) throws Exception {
-                ps.setFetchSize(1);
-                ps.setString(1, name);
-            }
-        });
+        jdbcTemplate.executeUpdate(table.sqlUpdateLastModifiedByName(),
+                new JdbcTemplate.PrepateStatementAwareCallback() {
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                        ps.setFetchSize(1);
+                        ps.setString(1, name);
+                    }
+                });
     }
 
+    @Override
     public void renameFile(final String from, final String to) throws IOException {
         // TODO find a way if it can be done in the same sql query
         deleteFile(to);
         jdbcTemplate.executeUpdate(table.sqlUpdateNameByName(), new JdbcTemplate.PrepateStatementAwareCallback() {
-            public void fillPrepareStatement(PreparedStatement ps) throws Exception {
+            @Override
+            public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
                 ps.setFetchSize(1);
                 ps.setString(1, to);
                 ps.setString(2, from);
@@ -109,48 +126,59 @@ public abstract class AbstractFileEntryHandler implements FileEntryHandler {
         });
     }
 
+    @Override
     public long fileLength(final String name) throws IOException {
-        return ((Long) jdbcTemplate.executeSelect(table.sqlSelectSizeByName(), new JdbcTemplate.ExecuteSelectCallback() {
-            public void fillPrepareStatement(PreparedStatement ps) throws Exception {
-                ps.setFetchSize(1);
-                ps.setString(1, name);
-            }
+        return ((Long) jdbcTemplate.executeSelect(table.sqlSelectSizeByName(),
+                new JdbcTemplate.ExecuteSelectCallback() {
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                        ps.setFetchSize(1);
+                        ps.setString(1, name);
+                    }
 
-            public Object execute(ResultSet rs) throws Exception {
-                if (rs.next()) {
-                    return new Long(rs.getLong(1));
-                }
-                return new Long(0L);
-            }
-        })).longValue();
+                    @Override
+                    public Object execute(final ResultSet rs) throws Exception {
+                        if (rs.next()) {
+                            return new Long(rs.getLong(1));
+                        }
+                        return new Long(0L);
+                    }
+                })).longValue();
     }
 
-    public IndexInput openInput(String name) throws IOException {
+    @Override
+    public IndexInput openInput(final String name) throws IOException {
         IndexInput indexInput;
-        JdbcFileEntrySettings settings = jdbcDirectory.getSettings().getFileEntrySettings(name);
+        final JdbcFileEntrySettings settings = jdbcDirectory.getSettings().getFileEntrySettings(name);
         try {
-            Class inputClass = settings.getSettingAsClass(JdbcFileEntrySettings.INDEX_INPUT_TYPE_SETTING, null);
+            final Class<?> inputClass = settings.getSettingAsClass(JdbcFileEntrySettings.INDEX_INPUT_TYPE_SETTING,
+                    null);
             indexInput = (IndexInput) inputClass.newInstance();
-        } catch (Exception e) {
-            throw new JdbcStoreException("Failed to create indexInput instance [" + settings.getSetting(JdbcFileEntrySettings.INDEX_INPUT_TYPE_SETTING) + "]", e);
+        } catch (final Exception e) {
+            throw new JdbcStoreException("Failed to create indexInput instance ["
+                    + settings.getSetting(JdbcFileEntrySettings.INDEX_INPUT_TYPE_SETTING) + "]", e);
         }
         ((JdbcIndexConfigurable) indexInput).configure(name, jdbcDirectory, settings);
         return indexInput;
     }
 
-    public IndexOutput createOutput(String name) throws IOException {
+    @Override
+    public IndexOutput createOutput(final String name) throws IOException {
         IndexOutput indexOutput;
-        JdbcFileEntrySettings settings = jdbcDirectory.getSettings().getFileEntrySettings(name);
+        final JdbcFileEntrySettings settings = jdbcDirectory.getSettings().getFileEntrySettings(name);
         try {
-            Class inputClass = settings.getSettingAsClass(JdbcFileEntrySettings.INDEX_OUTPUT_TYPE_SETTING, null);
+            final Class<?> inputClass = settings.getSettingAsClass(JdbcFileEntrySettings.INDEX_OUTPUT_TYPE_SETTING,
+                    null);
             indexOutput = (IndexOutput) inputClass.newInstance();
-        } catch (Exception e) {
-            throw new JdbcStoreException("Failed to create indexOutput instance [" + settings.getSetting(JdbcFileEntrySettings.INDEX_OUTPUT_TYPE_SETTING) + "]", e);
+        } catch (final Exception e) {
+            throw new JdbcStoreException("Failed to create indexOutput instance ["
+                    + settings.getSetting(JdbcFileEntrySettings.INDEX_OUTPUT_TYPE_SETTING) + "]", e);
         }
         ((JdbcIndexConfigurable) indexOutput).configure(name, jdbcDirectory, settings);
         return indexOutput;
     }
 
+    @Override
     public void close() throws IOException {
         // do nothing
     }

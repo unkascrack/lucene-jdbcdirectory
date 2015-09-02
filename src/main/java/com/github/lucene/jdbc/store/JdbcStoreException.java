@@ -33,7 +33,8 @@ public class JdbcStoreException extends IOException {
     private Throwable cause;
 
     /**
-     * Construct a <code>JdbcStoreException</code> with the specified detail message.
+     * Construct a <code>JdbcStoreException</code> with the specified detail
+     * message.
      *
      * @param msg
      *            the detail message
@@ -43,7 +44,8 @@ public class JdbcStoreException extends IOException {
     }
 
     /**
-     * Construct a <code>JdbcStoreException</code> with the specified detail message and nested exception.
+     * Construct a <code>JdbcStoreException</code> with the specified detail
+     * message and nested exception.
      *
      * @param msg
      *            the detail message
@@ -61,14 +63,17 @@ public class JdbcStoreException extends IOException {
     @Override
     public Throwable getCause() {
         // Even if you cannot set the cause of this exception other than through
-        // the constructor, we check for the cause being "this" here, as the cause
-        // could still be set to "this" via reflection: for example, by a remoting
+        // the constructor, we check for the cause being "this" here, as the
+        // cause
+        // could still be set to "this" via reflection: for example, by a
+        // remoting
         // deserializer like Hessian's.
         return cause == this ? null : cause;
     }
 
     /**
-     * Return the detail message, including the message from the nested exception if there is one.
+     * Return the detail message, including the message from the nested
+     * exception if there is one.
      */
     @Override
     public String getMessage() {
@@ -81,7 +86,8 @@ public class JdbcStoreException extends IOException {
     }
 
     /**
-     * Print the composite message and the embedded stack trace to the specified stream.
+     * Print the composite message and the embedded stack trace to the specified
+     * stream.
      *
      * @param ps
      *            the print stream
@@ -97,7 +103,8 @@ public class JdbcStoreException extends IOException {
     }
 
     /**
-     * Print the composite message and the embedded stack trace to the specified print writer.
+     * Print the composite message and the embedded stack trace to the specified
+     * print writer.
      *
      * @param pw
      *            the print writer
@@ -113,11 +120,12 @@ public class JdbcStoreException extends IOException {
     }
 
     /**
-     * Check whether this exception contains an exception of the given class: either it is of the given class itself or
-     * it contains a nested cause of the given class.
+     * Check whether this exception contains an exception of the given class:
+     * either it is of the given class itself or it contains a nested cause of
+     * the given class.
      * <p>
-     * Currently just traverses JdbcStoreException causes. Will use the JDK 1.4 exception cause mechanism once requires
-     * JDK 1.4.
+     * Currently just traverses JdbcStoreException causes. Will use the JDK 1.4
+     * exception cause mechanism once requires JDK 1.4.
      *
      * @param exClass
      *            the exception class to look for

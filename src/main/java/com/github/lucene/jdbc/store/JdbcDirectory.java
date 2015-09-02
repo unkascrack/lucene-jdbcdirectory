@@ -17,15 +17,19 @@
 package com.github.lucene.jdbc.store;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.Lock;
@@ -33,49 +37,63 @@ import org.apache.lucene.store.Lock;
 import com.github.lucene.jdbc.store.dialect.Dialect;
 import com.github.lucene.jdbc.store.dialect.DialectResolver;
 import com.github.lucene.jdbc.store.handler.FileEntryHandler;
+import com.github.lucene.jdbc.store.lock.JdbcLock;
 import com.github.lucene.jdbc.store.support.JdbcTable;
 import com.github.lucene.jdbc.store.support.JdbcTemplate;
 
 /**
- * A Jdbc based implementation of a Lucene <code>Directory</code> allowing the storage of a Lucene index within a
- * database. Uses a jdbc <code>DataSource</code>, {@link org.apache.lucene.store.jdbc.dialect.Dialect} specific for the
- * database used, and an optional {@link JdbcDirectorySettings} and
- * {@link org.apache.lucene.store.jdbc.support.JdbcTable} for configuration.
+ * A Jdbc based implementation of a Lucene <code>Directory</code> allowing the
+ * storage of a Lucene index within a database. Uses a jdbc
+ * <code>DataSource</code>, {@link org.apache.lucene.store.jdbc.dialect.Dialect}
+ * specific for the database used, and an optional {@link JdbcDirectorySettings}
+ * and {@link org.apache.lucene.store.jdbc.support.JdbcTable} for configuration.
  * <p/>
- * The directory works against a single table, where the binary data is stored in <code>Blob</code>. Each "file" has an
- * entry in the database, and different {@link org.apache.lucene.store.jdbc.handler.FileEntryHandler} can be defines for
- * different files (or files groups).
+ * The directory works against a single table, where the binary data is stored
+ * in <code>Blob</code>. Each "file" has an entry in the database, and different
+ * {@link org.apache.lucene.store.jdbc.handler.FileEntryHandler} can be defines
+ * for different files (or files groups).
  * <p/>
- * Most of the files will not be deleted from the database when the directory delete method is called, but will only be
- * marked to be deleted (see {@link org.apache.lucene.store.jdbc.handler.MarkDeleteFileEntryHandler}. It is done since
- * other readers or searchers might be working with the database, and still use the files. The ability to purge mark
- * deleted files based on a "delta" is acheived using {@link #deleteMarkDeleted()} and {@link #deleteMarkDeleted(long)}.
- * Note, the purging process is not called by the directory code, so it will have to be managed by the application using
+ * Most of the files will not be deleted from the database when the directory
+ * delete method is called, but will only be marked to be deleted (see
+ * {@link org.apache.lucene.store.jdbc.handler.MarkDeleteFileEntryHandler}. It
+ * is done since other readers or searchers might be working with the database,
+ * and still use the files. The ability to purge mark deleted files based on a
+ * "delta" is acheived using {@link #deleteMarkDeleted()} and
+ * {@link #deleteMarkDeleted(long)}. Note, the purging process is not called by
+ * the directory code, so it will have to be managed by the application using
  * the jdbc directory.
  * <p/>
- * For transaction management, all the operations performed against the database do not call <code>commit</code> or
- * <code>rollback</code>. They simply open a connection (using
- * {@link org.apache.lucene.store.jdbc.datasource.DataSourceUtils#getConnection(javax.sql.DataSource)} ), and close it
- * using {@link org.apache.lucene.store.jdbc.datasource.DataSourceUtils#releaseConnection(java.sql.Connection)}). This
- * results in the fact that transcation management is simple and wraps the directory operations, allowing it to span as
- * many operations as needed.
+ * For transaction management, all the operations performed against the database
+ * do not call <code>commit</code> or <code>rollback</code>. They simply open a
+ * connection (using
+ * {@link org.apache.lucene.store.jdbc.datasource.DataSourceUtils#getConnection(javax.sql.DataSource)}
+ * ), and close it using
+ * {@link org.apache.lucene.store.jdbc.datasource.DataSourceUtils#releaseConnection(java.sql.Connection)}
+ * ). This results in the fact that transcation management is simple and wraps
+ * the directory operations, allowing it to span as many operations as needed.
  * <p/>
- * For none managed applications (i.e. applications that do not use JTA or Spring transaction manager), the jdbc
- * directory implementation comes with {@link org.apache.lucene.store.jdbc.datasource.TransactionAwareDataSourceProxy}
- * which wraps a <code>DataSource</code> (should be a pooled one, like Jakartat DBCP). Using it with the
- * {@link org.apache.lucene.store.jdbc.datasource.DataSourceUtils}, or the provided {@link DirectoryTemplate} should
- * make integrating or using jdbc directory simple.
+ * For none managed applications (i.e. applications that do not use JTA or
+ * Spring transaction manager), the jdbc directory implementation comes with
+ * {@link org.apache.lucene.store.jdbc.datasource.TransactionAwareDataSourceProxy}
+ * which wraps a <code>DataSource</code> (should be a pooled one, like Jakartat
+ * DBCP). Using it with the
+ * {@link org.apache.lucene.store.jdbc.datasource.DataSourceUtils}, or the
+ * provided {@link DirectoryTemplate} should make integrating or using jdbc
+ * directory simple.
  * <p/>
- * Also, for none managed applications, there is an option working with autoCommit=true mode. The system will work much
- * slower, and it is only supported on a portion of the databases, but any existing code that uses Lucene with any other
- * <code>Directory</code> implemenation should work as is.
+ * Also, for none managed applications, there is an option working with
+ * autoCommit=true mode. The system will work much slower, and it is only
+ * supported on a portion of the databases, but any existing code that uses
+ * Lucene with any other <code>Directory</code> implemenation should work as is.
  * <p/>
- * If working within managed environments, an external transaction management should be performed (using JTA for
- * example). Simple solutions can be using CMT or Spring Framework abstraction of transaction managers. Currently, the
- * jdbc directory implementation does not implement a transaction management abstraction, since there is a very good
- * solution out there already (Spring and JTA). Note, when using Spring and the
- * <code>DataSourceTransactionManager</code>, to provide the jdbc directory with a Spring's
- * <code>TransactionAwareDataSourceProxy</code>.
+ * If working within managed environments, an external transaction management
+ * should be performed (using JTA for example). Simple solutions can be using
+ * CMT or Spring Framework abstraction of transaction managers. Currently, the
+ * jdbc directory implementation does not implement a transaction management
+ * abstraction, since there is a very good solution out there already (Spring
+ * and JTA). Note, when using Spring and the
+ * <code>DataSourceTransactionManager</code>, to provide the jdbc directory with
+ * a Spring's <code>TransactionAwareDataSourceProxy</code>.
  *
  * @author kimchy
  */
@@ -89,13 +107,15 @@ public class JdbcDirectory extends Directory {
 
     private JdbcDirectorySettings settings;
 
-    private final HashMap<String, FileEntryHandler> fileEntryHandlers = new HashMap<String, FileEntryHandler>();
+    private final HashMap fileEntryHandlers = new HashMap();
 
     private JdbcTemplate jdbcTemplate;
 
     /**
-     * Creates a new jdbc directory. Creates new {@link JdbcDirectorySettings} using it's default values. Uses
-     * {@link org.apache.lucene.store.jdbc.dialect.DialectResolver} to try and automatically reolve the
+     * Creates a new jdbc directory. Creates new {@link JdbcDirectorySettings}
+     * using it's default values. Uses
+     * {@link org.apache.lucene.store.jdbc.dialect.DialectResolver} to try and
+     * automatically reolve the
      * {@link org.apache.lucene.store.jdbc.dialect.Dialect}.
      *
      * @param dataSource
@@ -110,7 +130,8 @@ public class JdbcDirectory extends Directory {
     }
 
     /**
-     * Creates a new jdbc directory. Creates new {@link JdbcDirectorySettings} using it's default values.
+     * Creates a new jdbc directory. Creates new {@link JdbcDirectorySettings}
+     * using it's default values.
      *
      * @param dataSource
      *            The data source to use
@@ -124,8 +145,10 @@ public class JdbcDirectory extends Directory {
     }
 
     /**
-     * Creates a new jdbc directory. Uses {@link org.apache.lucene.store.jdbc.dialect.DialectResolver} to try and
-     * automatically reolve the {@link org.apache.lucene.store.jdbc.dialect.Dialect}.
+     * Creates a new jdbc directory. Uses
+     * {@link org.apache.lucene.store.jdbc.dialect.DialectResolver} to try and
+     * automatically reolve the
+     * {@link org.apache.lucene.store.jdbc.dialect.Dialect}.
      *
      * @param dataSource
      *            The data source to use
@@ -182,8 +205,8 @@ public class JdbcDirectory extends Directory {
             final String name = (String) it.next();
             final JdbcFileEntrySettings feSettings = (JdbcFileEntrySettings) fileEntrySettings.get(name);
             try {
-                final Class fileEntryHandlerClass = feSettings.getSettingAsClass(
-                        JdbcFileEntrySettings.FILE_ENTRY_HANDLER_TYPE, null);
+                final Class fileEntryHandlerClass = feSettings
+                        .getSettingAsClass(JdbcFileEntrySettings.FILE_ENTRY_HANDLER_TYPE, null);
                 final FileEntryHandler fileEntryHandler = (FileEntryHandler) fileEntryHandlerClass.newInstance();
                 fileEntryHandler.configure(this);
                 fileEntryHandlers.put(name, fileEntryHandler);
@@ -194,58 +217,284 @@ public class JdbcDirectory extends Directory {
         }
     }
 
-    @Override
-    public void close() throws IOException {
-        // TODO Auto-generated method stub
+    /**
+     * Returns <code>true</code> if the database table exists.
+     *
+     * @return <code>true</code> if the database table exists,
+     *         <code>false</code> otherwise
+     * @throws java.io.IOException
+     * @throws UnsupportedOperationException
+     *             If the database dialect does not support it
+     */
+    public boolean tableExists() throws IOException, UnsupportedOperationException {
+        final Boolean tableExists = (Boolean) jdbcTemplate.executeSelect(
+                dialect.sqlTableExists(table.getCatalog(), table.getSchema()),
+                new JdbcTemplate.ExecuteSelectCallback() {
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                        ps.setFetchSize(1);
+                        ps.setString(1, table.getName().toLowerCase());
+                    }
 
+                    @Override
+                    public Object execute(final ResultSet rs) throws Exception {
+                        if (rs.next()) {
+                            return Boolean.TRUE;
+                        }
+                        return Boolean.FALSE;
+                    }
+                });
+        return tableExists.booleanValue();
     }
 
-    @Override
-    public IndexOutput createOutput(final String name, final IOContext context) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+    /**
+     * Deletes the database table (drops it) from the database.
+     *
+     * @throws java.io.IOException
+     */
+    public void delete() throws IOException {
+        if (!dialect.supportsIfExistsAfterTableName() && !dialect.supportsIfExistsBeforeTableName()) {
+            // there are databases where the fact that an exception was thrown,
+            // invalidates the connection
+            // so if they do not support "if exists" in the drop clause, we will
+            // try to check first if the
+            // table exists.
+            if (dialect.supportsTableExists() && !tableExists()) {
+                return;
+            }
+        }
+        jdbcTemplate.executeUpdate(table.sqlDrop());
+    }
+
+    /**
+     * Creates a new database table. Drops it before hand.
+     *
+     * @throws java.io.IOException
+     */
+    public void create() throws IOException {
+        try {
+            delete();
+        } catch (final Exception e) {
+            // e.printStackTrace();
+        }
+        jdbcTemplate.executeUpdate(table.sqlCreate());
+        ((JdbcLock) createLock()).initializeDatabase(this);
+    }
+
+    /**
+     * Deletes the contents of the database, except for the commit and write
+     * lock.
+     *
+     * @throws java.io.IOException
+     */
+    public void deleteContent() throws IOException {
+        jdbcTemplate.executeUpdate(table.sqlDeletaAll());
+    }
+
+    /**
+     * Delets all the file entries that are marked to be deleted, and they were
+     * marked "delta" time ago (base on database time, if possible by dialect).
+     * The delta is taken from
+     * {@link org.apache.lucene.store.jdbc.JdbcDirectorySettings#getDeleteMarkDeletedDelta()}
+     * .
+     */
+    public void deleteMarkDeleted() throws IOException {
+        deleteMarkDeleted(settings.getDeleteMarkDeletedDelta());
+    }
+
+    /**
+     * Delets all the file entries that are marked to be deleted, and they were
+     * marked "delta" time ago (base on database time, if possible by dialect).
+     */
+    public void deleteMarkDeleted(final long delta) throws IOException {
+        long currentTime = System.currentTimeMillis();
+        if (dialect.supportsCurrentTimestampSelection()) {
+            final String timestampSelectString = dialect.getCurrentTimestampSelectString();
+            if (dialect.isCurrentTimestampSelectStringCallable()) {
+                currentTime = ((Long) jdbcTemplate.executeCallable(timestampSelectString,
+                        new JdbcTemplate.CallableStatementCallback() {
+                            @Override
+                            public void fillCallableStatement(final CallableStatement cs) throws Exception {
+                                cs.registerOutParameter(1, java.sql.Types.TIMESTAMP);
+                            }
+
+                            @Override
+                            public Object readCallableData(final CallableStatement cs) throws Exception {
+                                final Timestamp timestamp = cs.getTimestamp(1);
+                                return new Long(timestamp.getTime());
+                            }
+                        })).longValue();
+            } else {
+                currentTime = ((Long) jdbcTemplate.executeSelect(timestampSelectString,
+                        new JdbcTemplate.ExecuteSelectCallback() {
+                            @Override
+                            public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                                // nothing to do here
+                            }
+
+                            @Override
+                            public Object execute(final ResultSet rs) throws Exception {
+                                rs.next();
+                                final Timestamp timestamp = rs.getTimestamp(1);
+                                return new Long(timestamp.getTime());
+                            }
+                        })).longValue();
+            }
+        }
+        final long deleteBefore = currentTime - delta;
+        jdbcTemplate.executeUpdate(table.sqlDeletaMarkDeleteByDelta(),
+                new JdbcTemplate.PrepateStatementAwareCallback() {
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                        ps.setBoolean(1, true);
+                        ps.setTimestamp(2, new Timestamp(deleteBefore));
+                    }
+                });
+    }
+
+    public String[] list() throws IOException {
+        return (String[]) jdbcTemplate.executeSelect(table.sqlSelectNames(), new JdbcTemplate.ExecuteSelectCallback() {
+            @Override
+            public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                ps.setBoolean(1, false);
+            }
+
+            @Override
+            public Object execute(final ResultSet rs) throws Exception {
+                final ArrayList names = new ArrayList();
+                while (rs.next()) {
+                    names.add(rs.getString(1));
+                }
+                return names.toArray(new String[names.size()]);
+            }
+        });
+    }
+
+    public boolean fileExists(final String name) throws IOException {
+        return getFileEntryHandler(name).fileExists(name);
+    }
+
+    public long fileModified(final String name) throws IOException {
+        return getFileEntryHandler(name).fileModified(name);
+    }
+
+    public void touchFile(final String name) throws IOException {
+        getFileEntryHandler(name).touchFile(name);
     }
 
     @Override
     public void deleteFile(final String name) throws IOException {
-        // TODO Auto-generated method stub
+        if (LuceneFileNames.isStaticFile(name)) {
+            forceDeleteFile(name);
+        } else {
+            getFileEntryHandler(name).deleteFile(name);
+        }
+    }
 
+    public void forceDeleteFile(final String name) throws IOException {
+        jdbcTemplate.executeUpdate(table.sqlDeleteByName(), new JdbcTemplate.PrepateStatementAwareCallback() {
+            @Override
+            public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                ps.setFetchSize(1);
+                ps.setString(1, name);
+            }
+        });
+    }
+
+    public List deleteFiles(final List names) throws IOException {
+        final HashMap tempMap = new HashMap();
+        for (final Iterator it = names.iterator(); it.hasNext();) {
+            final String name = (String) it.next();
+            final FileEntryHandler fileEntryHandler = getFileEntryHandler(name);
+            ArrayList tempNames = (ArrayList) tempMap.get(fileEntryHandler);
+            if (tempNames == null) {
+                tempNames = new ArrayList(names.size());
+                tempMap.put(fileEntryHandler, tempNames);
+            }
+            tempNames.add(name);
+        }
+        final ArrayList notDeleted = new ArrayList(names.size() / 2);
+        for (final Iterator it = tempMap.keySet().iterator(); it.hasNext();) {
+            final FileEntryHandler fileEntryHandler = (FileEntryHandler) it.next();
+            List tempNames = (ArrayList) tempMap.get(fileEntryHandler);
+            tempNames = fileEntryHandler.deleteFiles(tempNames);
+            if (tempNames != null) {
+                notDeleted.addAll(tempNames);
+            }
+        }
+        return notDeleted;
+    }
+
+    @Override
+    public void renameFile(final String from, final String to) throws IOException {
+        getFileEntryHandler(from).renameFile(from, to);
     }
 
     @Override
     public long fileLength(final String name) throws IOException {
-        // TODO Auto-generated method stub
-        return 0;
+        return getFileEntryHandler(name).fileLength(name);
     }
 
-    @Override
-    public String[] listAll() throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+    public IndexInput openInput(final String name) throws IOException {
+        return getFileEntryHandler(name).openInput(name);
     }
 
-    @Override
-    public Lock obtainLock(final String name) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+    public IndexOutput createOutput(final String name) throws IOException {
+        if (LuceneFileNames.isStaticFile(name)) {
+            forceDeleteFile(name);
+        }
+        return getFileEntryHandler(name).createOutput(name);
     }
 
-    @Override
-    public IndexInput openInput(final String name, final IOContext context) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+    public Lock makeLock(final String name) {
+        try {
+            final Lock lock = createLock();
+            ((JdbcLock) lock).configure(this, name);
+            return lock;
+        } catch (final IOException e) {
+            // shoule not happen
+            return null;
+        }
     }
 
+    /**
+     * Closes the directory.
+     */
     @Override
-    public void renameFile(final String source, final String dest) throws IOException {
-        // TODO Auto-generated method stub
+    public void close() throws IOException {
+        IOException last = null;
+        for (final Iterator it = fileEntryHandlers.values().iterator(); it.hasNext();) {
+            final FileEntryHandler fileEntryHandler = (FileEntryHandler) it.next();
+            try {
+                fileEntryHandler.close();
+            } catch (final IOException e) {
+                last = e;
+            }
+        }
+        if (last != null) {
+            throw last;
+        }
+    }
+
+    protected FileEntryHandler getFileEntryHandler(final String name) {
+        FileEntryHandler handler = (FileEntryHandler) fileEntryHandlers.get(name.substring(name.length() - 3));
+        if (handler != null) {
+            return handler;
+        }
+        handler = (FileEntryHandler) fileEntryHandlers.get(name);
+        if (handler != null) {
+            return handler;
+        }
+        return (FileEntryHandler) fileEntryHandlers.get(JdbcDirectorySettings.DEFAULT_FILE_ENTRY);
 
     }
 
-    @Override
-    public void sync(final Collection<String> names) throws IOException {
-        // TODO Auto-generated method stub
-
+    protected Lock createLock() throws IOException {
+        try {
+            return settings.getLockClass().newInstance();
+        } catch (final Exception e) {
+            throw new JdbcStoreException("Failed to create lock class [" + settings.getLockClass() + "]");
+        }
     }
 
     public Dialect getDialect() {

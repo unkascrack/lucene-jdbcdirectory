@@ -30,17 +30,22 @@ import com.github.lucene.jdbc.store.lock.PhantomReadLock;
 /**
  * General directory level settings.
  * <p />
- * The settings also holds {@link JdbcFileEntrySettings}, that can be registered with the directory settings. Note, that
- * when registering them, they are registered under both the complete name and the 3 charecters name suffix.
+ * The settings also holds {@link JdbcFileEntrySettings}, that can be registered
+ * with the directory settings. Note, that when registering them, they are
+ * registered under both the complete name and the 3 charecters name suffix.
  * <p />
- * When creating the settings, it already holds sensible settings, they are: The default {@link JdbcFileEntrySettings}
- * uses the file entry settings defaults. The "deletable", ""deleteable.new", and "deletable.new" uses the
- * {@link org.apache.lucene.store.jdbc.handler.NoOpFileEntryHandler}. The "segments" and "segments.new" uses the
+ * When creating the settings, it already holds sensible settings, they are: The
+ * default {@link JdbcFileEntrySettings} uses the file entry settings defaults.
+ * The "deletable", ""deleteable.new", and "deletable.new" uses the
+ * {@link org.apache.lucene.store.jdbc.handler.NoOpFileEntryHandler}. The
+ * "segments" and "segments.new" uses the
  * {@link org.apache.lucene.store.jdbc.handler.ActualDeleteFileEntryHandler},
  * {@link org.apache.lucene.store.jdbc.index.FetchOnOpenJdbcIndexInput}, and
- * {@link org.apache.lucene.store.jdbc.index.RAMJdbcIndexOutput}. The file suffix "fnm" uses the
+ * {@link org.apache.lucene.store.jdbc.index.RAMJdbcIndexOutput}. The file
+ * suffix "fnm" uses the
  * {@link org.apache.lucene.store.jdbc.index.FetchOnOpenJdbcIndexInput}, and
- * {@link org.apache.lucene.store.jdbc.index.RAMJdbcIndexOutput}. The file suffix "del" and "tmp" uses the
+ * {@link org.apache.lucene.store.jdbc.index.RAMJdbcIndexOutput}. The file
+ * suffix "del" and "tmp" uses the
  * {@link org.apache.lucene.store.jdbc.handler.ActualDeleteFileEntryHandler}.
  *
  * @author kimchy
@@ -86,7 +91,8 @@ public class JdbcDirectorySettings {
     private String tableType = "";
 
     /**
-     * Creates a new instance of the Jdbc directory settings with it's default values initialized.
+     * Creates a new instance of the Jdbc directory settings with it's default
+     * values initialized.
      */
     public JdbcDirectorySettings() {
         final JdbcFileEntrySettings defaultSettings = new JdbcFileEntrySettings();
@@ -222,8 +228,8 @@ public class JdbcDirectorySettings {
     }
 
     /**
-     * Registers a {@link JdbcFileEntrySettings} against the given name. The name can be the full name of the file, or
-     * it's 3 charecters suffix.
+     * Registers a {@link JdbcFileEntrySettings} against the given name. The
+     * name can be the full name of the file, or it's 3 charecters suffix.
      */
     public void registerFileEntrySettings(final String name, final JdbcFileEntrySettings fileEntrySettings) {
         this.fileEntrySettings.put(name, fileEntrySettings);
@@ -237,9 +243,10 @@ public class JdbcDirectorySettings {
     }
 
     /**
-     * Returns the file entries according to the name. If a direct match is found, it's registered
-     * {@link JdbcFileEntrySettings} is returned. If one is registered against the last 3 charecters, then it is
-     * returned. If none is found, the default file entry handler is returned.
+     * Returns the file entries according to the name. If a direct match is
+     * found, it's registered {@link JdbcFileEntrySettings} is returned. If one
+     * is registered against the last 3 charecters, then it is returned. If none
+     * is found, the default file entry handler is returned.
      */
     public JdbcFileEntrySettings getFileEntrySettings(final String name) {
         final JdbcFileEntrySettings settings = getFileEntrySettingsWithoutDefault(name);
@@ -250,8 +257,9 @@ public class JdbcDirectorySettings {
     }
 
     /**
-     * Same as {@link #getFileEntrySettings(String)}, only returns <code>null</code> if no match is found (instead of
-     * the default file entry handler settings).
+     * Same as {@link #getFileEntrySettings(String)}, only returns
+     * <code>null</code> if no match is found (instead of the default file entry
+     * handler settings).
      */
     public JdbcFileEntrySettings getFileEntrySettingsWithoutDefault(final String name) {
         final JdbcFileEntrySettings settings = fileEntrySettings.get(name.substring(name.length() - 3));
@@ -269,18 +277,20 @@ public class JdbcDirectorySettings {
     }
 
     /**
-     * Returns the delta (in millis) for the delete mark deleted. File entries marked as being deleted will be deleted
-     * from the system (using {@link JdbcDirectory#deleteMarkDeleted()} if: current_time - deletelMarkDeletedDelta &lt;
-     * Time File Entry Marked as Deleted.
+     * Returns the delta (in millis) for the delete mark deleted. File entries
+     * marked as being deleted will be deleted from the system (using
+     * {@link JdbcDirectory#deleteMarkDeleted()} if: current_time -
+     * deletelMarkDeletedDelta &lt; Time File Entry Marked as Deleted.
      */
     public long getDeleteMarkDeletedDelta() {
         return deleteMarkDeletedDelta;
     }
 
     /**
-     * Sets the delta (in millis) for the delete mark deleted. File entries marked as being deleted will be deleted from
-     * the system (using {@link JdbcDirectory#deleteMarkDeleted()} if: current_time - deletelMarkDeletedDelta &lt; Time
-     * File Entry Marked as Deleted.
+     * Sets the delta (in millis) for the delete mark deleted. File entries
+     * marked as being deleted will be deleted from the system (using
+     * {@link JdbcDirectory#deleteMarkDeleted()} if: current_time -
+     * deletelMarkDeletedDelta &lt; Time File Entry Marked as Deleted.
      */
     public void setDeleteMarkDeletedDelta(final long deleteMarkDeletedDelta) {
         this.deleteMarkDeletedDelta = deleteMarkDeletedDelta;

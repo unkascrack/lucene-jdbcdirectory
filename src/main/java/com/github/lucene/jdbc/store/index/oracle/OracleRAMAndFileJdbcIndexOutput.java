@@ -16,22 +16,24 @@
 
 package com.github.lucene.jdbc.store.index.oracle;
 
-import org.apache.lucene.store.jdbc.index.FileJdbcIndexOutput;
-import org.apache.lucene.store.jdbc.index.RAMAndFileJdbcIndexOutput;
-import org.apache.lucene.store.jdbc.index.RAMJdbcIndexOutput;
+import com.github.lucene.jdbc.store.index.FileJdbcIndexOutput;
+import com.github.lucene.jdbc.store.index.RAMAndFileJdbcIndexOutput;
+import com.github.lucene.jdbc.store.index.RAMJdbcIndexOutput;
 
 /**
- * A specialized Oracle version that works (through reflection) with
- * Oracle 9i/8i specific blob API for blobs bigger than 4k.
+ * A specialized Oracle version that works (through reflection) with Oracle
+ * 9i/8i specific blob API for blobs bigger than 4k.
  *
  * @author kimchy
  */
 public class OracleRAMAndFileJdbcIndexOutput extends RAMAndFileJdbcIndexOutput {
 
+    @Override
     protected FileJdbcIndexOutput createFileJdbcIndexOutput() {
         return new OracleFileJdbcIndexOutput();
     }
 
+    @Override
     protected RAMJdbcIndexOutput createRamJdbcIndexOutput() {
         return new OracleRAMJdbcIndexOutput();
     }

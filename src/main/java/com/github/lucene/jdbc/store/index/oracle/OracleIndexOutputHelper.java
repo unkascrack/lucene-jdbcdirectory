@@ -20,51 +20,49 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.ResultSet;
 
-import org.apache.lucene.store.jdbc.support.JdbcTable;
-import org.compass.core.util.MethodInvoker;
+import com.github.lucene.jdbc.store.support.JdbcTable;
+import com.github.lucene.jdbc.store.support.MethodInvoker;
 
 /**
  * @author kimchy
  */
 public abstract class OracleIndexOutputHelper {
 
-    public static String sqlInsert(JdbcTable table) {
-        return new StringBuffer().append("insert into ").append(table.getQualifiedName())
-                .append(" (").append(table.getNameColumn().getQuotedName()).append(", ")
+    public static String sqlInsert(final JdbcTable table) {
+        return new StringBuffer().append("insert into ").append(table.getQualifiedName()).append(" (")
+                .append(table.getNameColumn().getQuotedName()).append(", ")
                 .append(table.getValueColumn().getQuotedName()).append(", ")
                 .append(table.getSizeColumn().getQuotedName()).append(", ")
                 .append(table.getLastModifiedColumn().getQuotedName()).append(", ")
-                .append(table.getDeletedColumn().getQuotedName())
-                .append(") values ( ?, EMPTY_BLOB(), ?, ").append(table.getDialect().getCurrentTimestampFunction()).append(", ?").append(" )").toString();
+                .append(table.getDeletedColumn().getQuotedName()).append(") values ( ?, EMPTY_BLOB(), ?, ")
+                .append(table.getDialect().getCurrentTimestampFunction()).append(", ?").append(" )").toString();
     }
 
-    public static String sqlUpdate(JdbcTable table) {
-        return new StringBuffer().append("select ").append(table.getValueColumn().getQuotedName())
-                .append(" as x from ").append(table.getQualifiedName())
-                .append(" where ").append(table.getNameColumn().getQuotedName())
+    public static String sqlUpdate(final JdbcTable table) {
+        return new StringBuffer().append("select ").append(table.getValueColumn().getQuotedName()).append(" as x from ")
+                .append(table.getQualifiedName()).append(" where ").append(table.getNameColumn().getQuotedName())
                 .append(" = ? for update").toString();
     }
 
-    public static OutputStream getBlobOutputStream(ResultSet rs) throws IOException {
-        MethodInvoker getBlobMethod = new MethodInvoker();
+    public static OutputStream getBlobOutputStream(final ResultSet rs) throws IOException {
+        final MethodInvoker getBlobMethod = new MethodInvoker();
         getBlobMethod.setTargetMethod("getBLOB");
         getBlobMethod.setTargetObject(rs);
-        getBlobMethod.setArguments(new Object[]{"x"});
+        getBlobMethod.setArguments(new Object[] { "x" });
         Object BLOB;
         try {
             BLOB = getBlobMethod.prepare().invoke();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Failed to getBLOB on [" + rs + "]", e);
         }
-        MethodInvoker getBinaryOutputStreamMethod = new MethodInvoker();
+        final MethodInvoker getBinaryOutputStreamMethod = new MethodInvoker();
         getBinaryOutputStreamMethod.setTargetMethod("getBinaryOutputStream");
         getBinaryOutputStreamMethod.setTargetObject(BLOB);
         try {
             return (OutputStream) getBinaryOutputStreamMethod.prepare().invoke();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Failed to getBinaryOutputStream on [" + BLOB + "]", e);
         }
     }
-
 
 }

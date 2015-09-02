@@ -5,16 +5,13 @@ import java.io.IOException;
 import org.apache.lucene.store.IndexOutput;
 
 /**
- * A simple base class that performs index output memory based buffering. The buffer size if configurable.
+ * A simple base class that performs index output memory based buffering. The
+ * buffer size if configurable.
  *
  * @author kimchy
  */
 // NEED TO BE MONITORED AGAINST LUCENE
 public abstract class ConfigurableBufferedIndexOutput extends IndexOutput {
-
-    protected ConfigurableBufferedIndexOutput(final String resourceDescription) {
-        super(resourceDescription);
-    }
 
     public static final int DEFAULT_BUFFER_SIZE = 16384;
 
@@ -23,6 +20,10 @@ public abstract class ConfigurableBufferedIndexOutput extends IndexOutput {
     private int bufferPosition = 0; // position in buffer
 
     protected int bufferSize = DEFAULT_BUFFER_SIZE;
+
+    protected ConfigurableBufferedIndexOutput(final String resourceDescription) {
+        super(resourceDescription);
+    }
 
     protected void initBuffer(final int bufferSize) {
         this.bufferSize = bufferSize;
@@ -103,7 +104,8 @@ public abstract class ConfigurableBufferedIndexOutput extends IndexOutput {
     }
 
     /**
-     * Expert: implements buffer write. Writes bytes at the current position in the output.
+     * Expert: implements buffer write. Writes bytes at the current position in
+     * the output.
      *
      * @param b
      *            the bytes to write
@@ -115,7 +117,8 @@ public abstract class ConfigurableBufferedIndexOutput extends IndexOutput {
     }
 
     /**
-     * Expert: implements buffer write. Writes bytes at the current position in the output.
+     * Expert: implements buffer write. Writes bytes at the current position in
+     * the output.
      *
      * @param b
      *            the bytes to write
@@ -135,7 +138,8 @@ public abstract class ConfigurableBufferedIndexOutput extends IndexOutput {
     }
 
     /**
-     * Returns the current position in this file, where the next write will occur.
+     * Returns the current position in this file, where the next write will
+     * occur.
      *
      * @see #seek(long)
      */

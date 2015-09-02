@@ -22,67 +22,80 @@ import java.sql.Blob;
 import java.sql.SQLException;
 
 /**
- * A helper class that can wrap an <code>InputStream</code> as a Jdbc <code>Blob<code>.
+ * A helper class that can wrap an <code>InputStream</code> as a Jdbc
+ * <code>Blob<code>.
  * <p>
  * Some jdbc drivers do not support the {@link java.sql.PreparedStatement#setBinaryStream(int, java.io.InputStream, int)}
  * method, but require using {@link java.sql.PreparedStatement#setBlob(int, java.sql.Blob)}. For code that already has
- * an <code>InputStream<code> ready, this <code>Blob</code> implementation can help.
+ * an <code>InputStream<code> ready, this <code>Blob</code> implementation can
+ * help.
  *
- * @see org.apache.lucene.store.jdbc.dialect.Dialect#useInputStreamToInsertBlob()  
+ * @see org.apache.lucene.store.jdbc.dialect.Dialect#useInputStreamToInsertBlob()
  *
  * @author kimchy
  */
 public class InputStreamBlob implements Blob {
 
-    private InputStream is;
+    private final InputStream is;
 
-    private long length;
+    private final long length;
 
-    public InputStreamBlob(InputStream is, long length) {
+    public InputStreamBlob(final InputStream is, final long length) {
         this.is = is;
         this.length = length;
     }
 
+    @Override
     public long length() throws SQLException {
-        return this.length;
+        return length;
     }
 
-    public void truncate(long len) throws SQLException {
+    @Override
+    public void truncate(final long len) throws SQLException {
         throw new UnsupportedOperationException("");
     }
 
-    public byte[] getBytes(long pos, int length) throws SQLException {
+    @Override
+    public byte[] getBytes(final long pos, final int length) throws SQLException {
         throw new UnsupportedOperationException("");
     }
 
-    public int setBytes(long pos, byte[] bytes) throws SQLException {
+    @Override
+    public int setBytes(final long pos, final byte[] bytes) throws SQLException {
         throw new UnsupportedOperationException("");
     }
 
-    public int setBytes(long pos, byte[] bytes, int offset, int len) throws SQLException {
+    @Override
+    public int setBytes(final long pos, final byte[] bytes, final int offset, final int len) throws SQLException {
         throw new UnsupportedOperationException("");
     }
 
-    public long position(byte pattern[], long start) throws SQLException {
+    @Override
+    public long position(final byte pattern[], final long start) throws SQLException {
         throw new UnsupportedOperationException("");
     }
 
+    @Override
     public InputStream getBinaryStream() throws SQLException {
         return is;
     }
 
+    @Override
     public void free() throws SQLException {
     }
 
-    public InputStream getBinaryStream(long pos, long length) throws SQLException {
+    @Override
+    public InputStream getBinaryStream(final long pos, final long length) throws SQLException {
         throw new UnsupportedOperationException("");
     }
 
-    public OutputStream setBinaryStream(long pos) throws SQLException {
+    @Override
+    public OutputStream setBinaryStream(final long pos) throws SQLException {
         throw new UnsupportedOperationException("");
     }
 
-    public long position(Blob pattern, long start) throws SQLException {
+    @Override
+    public long position(final Blob pattern, final long start) throws SQLException {
         throw new UnsupportedOperationException("");
     }
 }

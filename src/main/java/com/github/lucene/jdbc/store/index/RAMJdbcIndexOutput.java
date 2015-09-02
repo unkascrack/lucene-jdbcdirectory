@@ -26,8 +26,8 @@ import com.github.lucene.jdbc.store.JdbcDirectory;
 import com.github.lucene.jdbc.store.JdbcFileEntrySettings;
 
 /**
- * An <code>IndexOutput</code> implemenation that stores all the data written to it in memory, and flushes it to the
- * database when the output is closed.
+ * An <code>IndexOutput</code> implemenation that stores all the data written to
+ * it in memory, and flushes it to the database when the output is closed.
  * <p/>
  * Useful for small file entries like the segment file.
  *
@@ -35,8 +35,12 @@ import com.github.lucene.jdbc.store.JdbcFileEntrySettings;
  */
 public class RAMJdbcIndexOutput extends AbstractJdbcIndexOutput {
 
+    protected RAMJdbcIndexOutput() {
+        super("RAMAndFileJdbcIndexOutput");
+    }
+
     private class RAMFile {
-        ArrayList buffers = new ArrayList();
+        ArrayList<byte[]> buffers = new ArrayList<byte[]>();
         long length;
     }
 
@@ -79,7 +83,7 @@ public class RAMJdbcIndexOutput extends AbstractJdbcIndexOutput {
                 }
                 int bytesToCopy = bufferSize - bufferPos;
                 bytesToCopy = bytesToCopy >= remainder ? remainder : bytesToCopy;
-                final byte[] buf = (byte[]) file.buffers.get(buffer);
+                final byte[] buf = file.buffers.get(buffer);
                 System.arraycopy(buf, bufferPos, dest, destOffset, bytesToCopy);
                 destOffset += bytesToCopy;
                 position += bytesToCopy;
@@ -98,7 +102,7 @@ public class RAMJdbcIndexOutput extends AbstractJdbcIndexOutput {
                 bufferPos = 0;
                 buffer++;
             }
-            final byte[] buf = (byte[]) file.buffers.get(buffer);
+            final byte[] buf = file.buffers.get(buffer);
             position++;
             return buf[bufferPos++] & 0xFF;
         }
@@ -108,6 +112,7 @@ public class RAMJdbcIndexOutput extends AbstractJdbcIndexOutput {
 
     private int pointer = 0;
 
+    @Override
     public void configure(final String name, final JdbcDirectory jdbcDirectory, final JdbcFileEntrySettings settings)
             throws IOException {
         super.configure(name, jdbcDirectory, settings);
@@ -116,6 +121,7 @@ public class RAMJdbcIndexOutput extends AbstractJdbcIndexOutput {
         this.jdbcDirectory = jdbcDirectory;
     }
 
+    @Override
     public void flushBuffer(final byte[] src, final int offset, final int len) {
         byte[] buffer;
         int bufferPos = offset;
@@ -130,7 +136,7 @@ public class RAMJdbcIndexOutput extends AbstractJdbcIndexOutput {
                 buffer = new byte[bufferSize];
                 file.buffers.add(buffer);
             } else {
-                buffer = (byte[]) file.buffers.get(bufferNumber);
+                buffer = file.buffers.get(bufferNumber);
             }
 
             System.arraycopy(src, bufferPos, buffer, bufferOffset, bytesToCopy);
@@ -153,11 +159,13 @@ public class RAMJdbcIndexOutput extends AbstractJdbcIndexOutput {
         file = null;
     }
 
+    @Override
     public void seek(final long pos) throws IOException {
         super.seek(pos);
         pointer = (int) pos;
     }
 
+    @Override
     public long length() {
         return file.length;
     }
@@ -168,19 +176,25 @@ public class RAMJdbcIndexOutput extends AbstractJdbcIndexOutput {
             return;
         }
         if (file.buffers.size() == 1) {
-            indexOutput.writeBytes((byte[]) file.buffers.get(0), (int) file.length);
+            indexOutput.writeBytes(file.buffers.get(0), (int) file.length);
             return;
         }
         final int tempSize = file.buffers.size() - 1;
         int i;
         for (i = 0; i < tempSize; i++) {
-            indexOutput.writeBytes((byte[]) file.buffers.get(i), bufferSize);
+            indexOutput.writeBytes(file.buffers.get(i), bufferSize);
         }
         final int leftOver = (int) (file.length % bufferSize);
         if (leftOver == 0) {
-            indexOutput.writeBytes((byte[]) file.buffers.get(i), bufferSize);
+            indexOutput.writeBytes(file.buffers.get(i), bufferSize);
         } else {
-            indexOutput.writeBytes((byte[]) file.buffers.get(i), leftOver);
+            indexOutput.writeBytes(file.buffers.get(i), leftOver);
         }
+    }
+
+    @Override
+    public long getChecksum() throws IOException {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }

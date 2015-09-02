@@ -19,8 +19,8 @@ package com.github.lucene.jdbc.store.support;
 import com.github.lucene.jdbc.store.dialect.Dialect;
 
 /**
- * An internal representation of a database column used to store the {@link org.apache.lucene.store.jdbc.JdbcDirectory}
- * settings.
+ * An internal representation of a database column used to store the
+ * {@link org.apache.lucene.store.jdbc.JdbcDirectory} settings.
  *
  * @author kimchy
  */

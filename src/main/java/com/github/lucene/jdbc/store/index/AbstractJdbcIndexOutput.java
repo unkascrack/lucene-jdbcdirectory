@@ -34,30 +34,39 @@ public abstract class AbstractJdbcIndexOutput extends JdbcBufferedIndexOutput {
 
     protected JdbcDirectory jdbcDirectory;
 
-    public void configure(String name, JdbcDirectory jdbcDirectory, JdbcFileEntrySettings settings) throws IOException {
+    protected AbstractJdbcIndexOutput(final String resourceDescription) {
+        super(resourceDescription);
+    }
+
+    @Override
+    public void configure(final String name, final JdbcDirectory jdbcDirectory, final JdbcFileEntrySettings settings)
+            throws IOException {
         super.configure(name, jdbcDirectory, settings);
         this.name = name;
         this.jdbcDirectory = jdbcDirectory;
     }
 
+    @Override
     public void close() throws IOException {
         super.close();
         final long length = length();
         doBeforeClose();
-        jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlInsert(), new JdbcTemplate.PrepateStatementAwareCallback() {
-            public void fillPrepareStatement(PreparedStatement ps) throws Exception {
-                ps.setFetchSize(1);
-                ps.setString(1, name);
-                InputStream is = openInputStream();
-                if (jdbcDirectory.getDialect().useInputStreamToInsertBlob()) {
-                    ps.setBinaryStream(2, is, (int) length());
-                } else {
-                    ps.setBlob(2, new InputStreamBlob(is, length));
-                }
-                ps.setLong(3, length);
-                ps.setBoolean(4, false);
-            }
-        });
+        jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlInsert(),
+                new JdbcTemplate.PrepateStatementAwareCallback() {
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                        ps.setFetchSize(1);
+                        ps.setString(1, name);
+                        final InputStream is = openInputStream();
+                        if (jdbcDirectory.getDialect().useInputStreamToInsertBlob()) {
+                            ps.setBinaryStream(2, is, (int) length());
+                        } else {
+                            ps.setBlob(2, new InputStreamBlob(is, length));
+                        }
+                        ps.setLong(3, length);
+                        ps.setBoolean(4, false);
+                    }
+                });
         doAfterClose();
     }
 

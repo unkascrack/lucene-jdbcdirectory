@@ -27,11 +27,11 @@ import com.github.lucene.jdbc.store.JdbcDirectory;
 import com.github.lucene.jdbc.store.JdbcFileEntrySettings;
 
 /**
- * An <code>IndexOutput</code> implemenation that writes all the data to a temporary file, and when closed, flushes
- * the file to the database.
+ * An <code>IndexOutput</code> implemenation that writes all the data to a
+ * temporary file, and when closed, flushes the file to the database.
  * <p/>
- * Usefull for large files that are known in advance to be larger then the acceptable threshold configured in
- * {@link RAMAndFileJdbcIndexOutput}.
+ * Usefull for large files that are known in advance to be larger then the
+ * acceptable threshold configured in {@link RAMAndFileJdbcIndexOutput}.
  *
  * @author kimchy
  */
@@ -41,44 +41,61 @@ public class FileJdbcIndexOutput extends AbstractJdbcIndexOutput {
 
     private File tempFile;
 
-    public void configure(String name, JdbcDirectory jdbcDirectory, JdbcFileEntrySettings settings) throws IOException {
+    protected FileJdbcIndexOutput() {
+        super("FileJdbcIndexOutput");
+    }
+
+    @Override
+    public void configure(final String name, final JdbcDirectory jdbcDirectory, final JdbcFileEntrySettings settings)
+            throws IOException {
         super.configure(name, jdbcDirectory, settings);
-        tempFile = File.createTempFile(jdbcDirectory.getTable().getName() + "_" + name + "_" + System.currentTimeMillis(), ".ljt");
-        this.file = new RandomAccessFile(tempFile, "rw");
+        tempFile = File.createTempFile(
+                jdbcDirectory.getTable().getName() + "_" + name + "_" + System.currentTimeMillis(), ".ljt");
+        file = new RandomAccessFile(tempFile, "rw");
         this.jdbcDirectory = jdbcDirectory;
         this.name = name;
     }
 
-    protected void flushBuffer(byte[] b, int offset, int len) throws IOException {
+    @Override
+    protected void flushBuffer(final byte[] b, final int offset, final int len) throws IOException {
         file.write(b, offset, len);
     }
 
     /**
      * Random-access methods
      */
-    public void seek(long pos) throws IOException {
+    @Override
+    public void seek(final long pos) throws IOException {
         super.seek(pos);
         file.seek(pos);
     }
 
+    @Override
     public long length() throws IOException {
         return file.length();
     }
 
+    @Override
     protected InputStream openInputStream() throws IOException {
         return new BufferedInputStream(new FileInputStream(file.getFD()));
     }
 
-
+    @Override
     protected void doBeforeClose() throws IOException {
         file.seek(0);
     }
 
-
+    @Override
     protected void doAfterClose() throws IOException {
         file.close();
         tempFile.delete();
         tempFile = null;
         file = null;
+    }
+
+    @Override
+    public long getChecksum() throws IOException {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }

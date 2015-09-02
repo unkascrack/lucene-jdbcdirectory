@@ -29,12 +29,13 @@ import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.lucene.jdbc.store.JdbcDirectorySettings;
 import com.github.lucene.jdbc.store.JdbcStoreException;
+import com.github.lucene.jdbc.store.datasource.DataSourceUtils;
 
 /**
- * Helper class that isused to encapsulate resource and transaction handling related to <code>DataSource</code>,
- * <code>Statement</code>, and <code>ResultSet</code>. {@link DataSourceUtils} is used to open/cose relevant
+ * Helper class that isused to encapsulate resource and transaction handling
+ * related to <code>DataSource</code>, <code>Statement</code>, and
+ * <code>ResultSet</code>. {@link DataSourceUtils} is used to open/cose relevant
  * resources.
  *
  * @author kimchy
@@ -45,7 +46,8 @@ public class JdbcTemplate {
     private static final Logger log = LoggerFactory.getLogger(JdbcTemplate.class);
 
     /**
-     * A callback interface used to initialize a Jdbc <code>PreparedStatement</code>.
+     * A callback interface used to initialize a Jdbc
+     * <code>PreparedStatement</code>.
      */
     public static interface PrepateStatementAwareCallback {
 
@@ -61,7 +63,8 @@ public class JdbcTemplate {
     public static interface ExecuteSelectCallback extends PrepateStatementAwareCallback {
 
         /**
-         * Extract data from the <code>ResultSet</code> and an optional return value.
+         * Extract data from the <code>ResultSet</code> and an optional return
+         * value.
          */
         Object execute(ResultSet rs) throws Exception;
     }
@@ -72,51 +75,49 @@ public class JdbcTemplate {
     public static interface CallableStatementCallback {
 
         /**
-         * initialize/Fill the <code>CallableStatement</code> before it is executed.
+         * initialize/Fill the <code>CallableStatement</code> before it is
+         * executed.
          */
         void fillCallableStatement(CallableStatement cs) throws Exception;
 
         /**
-         * Read/Extract data from the result of the <code>CallableStatement</code> execution. CAn optionally
-         * have a return value.
+         * Read/Extract data from the result of the
+         * <code>CallableStatement</code> execution. CAn optionally have a
+         * return value.
          */
         Object readCallableData(CallableStatement cs) throws Exception;
     }
 
-    private DataSource dataSource;
-
-    private JdbcDirectorySettings settings;
+    private final DataSource dataSource;
 
     /**
      * Creates a new <code>JdbcTemplate</code>.
      */
-    public JdbcTemplate(DataSource dataSource, JdbcDirectorySettings settings) {
+    public JdbcTemplate(final DataSource dataSource) {
         this.dataSource = dataSource;
-        this.settings = settings;
     }
 
     /**
      * A template method to execute a simple sql select statement. The jdbc
-     * <code>Connection</code>, <code>PreparedStatement</code>, and <code>ResultSet</code>
-     * are managed by the template.
+     * <code>Connection</code>, <code>PreparedStatement</code>, and
+     * <code>ResultSet</code> are managed by the template.
      */
-    public Object executeSelect(String sql, ExecuteSelectCallback callback)
-            throws JdbcStoreException {
-        Connection con = DataSourceUtils.getConnection(dataSource);
+    public Object executeSelect(final String sql, final ExecuteSelectCallback callback) throws JdbcStoreException {
+        final Connection con = DataSourceUtils.getConnection(dataSource);
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
             ps = con.prepareStatement(sql);
-//            ps.setQueryTimeout(settings.getQueryTimeout());
+            // ps.setQueryTimeout(settings.getQueryTimeout());
             callback.fillPrepareStatement(ps);
             rs = ps.executeQuery();
             return callback.execute(rs);
-        } catch (JdbcStoreException e) {
+        } catch (final JdbcStoreException e) {
             if (log.isTraceEnabled()) {
                 log.trace("Failed to execute sql [" + sql + "]", e);
             }
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (log.isTraceEnabled()) {
                 log.trace("Failed to execute sql [" + sql + "]", e);
             }
@@ -130,25 +131,25 @@ public class JdbcTemplate {
 
     /**
      * A template method to execute a simple sql callable statement. The jdbc
-     * <code>Connection</code>, and <code>CallableStatement</code>
-     * are managed by the template.
+     * <code>Connection</code>, and <code>CallableStatement</code> are managed
+     * by the template.
      */
-    public Object executeCallable(String sql, CallableStatementCallback callback)
+    public Object executeCallable(final String sql, final CallableStatementCallback callback)
             throws JdbcStoreException {
-        Connection con = DataSourceUtils.getConnection(dataSource);
+        final Connection con = DataSourceUtils.getConnection(dataSource);
         CallableStatement cs = null;
         try {
             cs = con.prepareCall(sql);
-//            cs.setQueryTimeout(settings.getQueryTimeout());
+            // cs.setQueryTimeout(settings.getQueryTimeout());
             callback.fillCallableStatement(cs);
             cs.execute();
             return callback.readCallableData(cs);
-        } catch (JdbcStoreException e) {
+        } catch (final JdbcStoreException e) {
             if (log.isTraceEnabled()) {
                 log.trace("Failed to execute sql [" + sql + "]", e);
             }
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (log.isTraceEnabled()) {
                 log.trace("Failed to execute sql [" + sql + "]", e);
             }
@@ -161,25 +162,25 @@ public class JdbcTemplate {
 
     /**
      * A template method to execute a simple sql update. The jdbc
-     * <code>Connection</code>, and <code>PreparedStatement</code>
-     * are managed by the template. A <code>PreparedStatement</code> can be used
-     * to set values to the given sql.
+     * <code>Connection</code>, and <code>PreparedStatement</code> are managed
+     * by the template. A <code>PreparedStatement</code> can be used to set
+     * values to the given sql.
      */
-    public void executeUpdate(String sql, PrepateStatementAwareCallback callback)
+    public void executeUpdate(final String sql, final PrepateStatementAwareCallback callback)
             throws JdbcStoreException {
-        Connection con = DataSourceUtils.getConnection(dataSource);
+        final Connection con = DataSourceUtils.getConnection(dataSource);
         PreparedStatement ps = null;
         try {
             ps = con.prepareStatement(sql);
-//            ps.setQueryTimeout(settings.getQueryTimeout());
+            // ps.setQueryTimeout(settings.getQueryTimeout());
             callback.fillPrepareStatement(ps);
             ps.executeUpdate();
-        } catch (JdbcStoreException e) {
+        } catch (final JdbcStoreException e) {
             if (log.isTraceEnabled()) {
                 log.trace("Failed to execute sql [" + sql + "]", e);
             }
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (log.isTraceEnabled()) {
                 log.trace("Failed to execute sql [" + sql + "]", e);
             }
@@ -194,14 +195,14 @@ public class JdbcTemplate {
      * A template method to execute a simpel sql update (with no need for data
      * initialization).
      */
-    public void executeUpdate(String sql) throws JdbcStoreException {
-        Connection con = DataSourceUtils.getConnection(dataSource);
+    public void executeUpdate(final String sql) throws JdbcStoreException {
+        final Connection con = DataSourceUtils.getConnection(dataSource);
         Statement statement = null;
         try {
             statement = con.createStatement();
-//            statement.setQueryTimeout(settings.getQueryTimeout());
+            // statement.setQueryTimeout(settings.getQueryTimeout());
             statement.executeUpdate(sql);
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             if (log.isTraceEnabled()) {
                 log.trace("Failed to execute sql [" + sql + "]", e);
             }
@@ -215,17 +216,17 @@ public class JdbcTemplate {
     /**
      * A template method to execute a set of sqls in batch.
      */
-    public int[] executeBatch(String[] sqls) throws JdbcStoreException {
-        Connection con = DataSourceUtils.getConnection(dataSource);
+    public int[] executeBatch(final String[] sqls) throws JdbcStoreException {
+        final Connection con = DataSourceUtils.getConnection(dataSource);
         Statement statement = null;
         try {
             statement = con.createStatement();
-//            statement.setQueryTimeout(settings.getQueryTimeout());
-            for (String sql : sqls) {
+            // statement.setQueryTimeout(settings.getQueryTimeout());
+            for (final String sql : sqls) {
                 statement.addBatch(sql);
             }
             return statement.executeBatch();
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             if (log.isTraceEnabled()) {
                 log.trace("Failed to execute sql [" + Arrays.toString(sqls) + "]", e);
             }
@@ -237,23 +238,25 @@ public class JdbcTemplate {
     }
 
     /**
-     * A template method to execute that can execute the same sql several times using different
-     * values set to it (in the <code>fillPrepareStatement</code>) callback).
+     * A template method to execute that can execute the same sql several times
+     * using different values set to it (in the
+     * <code>fillPrepareStatement</code>) callback).
      */
-    public int[] executeBatch(String sql, PrepateStatementAwareCallback callback) throws JdbcStoreException {
-        Connection con = DataSourceUtils.getConnection(dataSource);
+    public int[] executeBatch(final String sql, final PrepateStatementAwareCallback callback)
+            throws JdbcStoreException {
+        final Connection con = DataSourceUtils.getConnection(dataSource);
         PreparedStatement ps = null;
         try {
             ps = con.prepareStatement(sql);
-//            ps.setQueryTimeout(settings.getQueryTimeout());
+            // ps.setQueryTimeout(settings.getQueryTimeout());
             callback.fillPrepareStatement(ps);
             return ps.executeBatch();
-        } catch (JdbcStoreException e) {
+        } catch (final JdbcStoreException e) {
             if (log.isTraceEnabled()) {
                 log.trace("Failed to execute sql [" + sql + "]", e);
             }
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (log.isTraceEnabled()) {
                 log.trace("Failed to execute sql [" + sql + "]", e);
             }

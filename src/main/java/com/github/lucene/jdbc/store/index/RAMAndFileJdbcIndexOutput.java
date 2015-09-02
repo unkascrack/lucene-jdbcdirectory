@@ -24,17 +24,19 @@ import com.github.lucene.jdbc.store.JdbcDirectory;
 import com.github.lucene.jdbc.store.JdbcFileEntrySettings;
 
 /**
- * An <code>IndexOutput</code> implementation that initially writes the data to a memory buffer. Once it exceeds
- * the configured threshold ({@link #INDEX_OUTPUT_THRESHOLD_SETTING}, will start working with a temporary file,
- * releasing the previous buffer.
+ * An <code>IndexOutput</code> implementation that initially writes the data to
+ * a memory buffer. Once it exceeds the configured threshold (
+ * {@link #INDEX_OUTPUT_THRESHOLD_SETTING}, will start working with a temporary
+ * file, releasing the previous buffer.
  *
  * @author kimchy
  */
 public class RAMAndFileJdbcIndexOutput extends IndexOutput implements JdbcIndexConfigurable {
 
     /**
-     * The threshold setting name. See {@link JdbcFileEntrySettings#setLongSetting(String, long)}.
-     * Should be set in bytes.
+     * The threshold setting name. See
+     * {@link JdbcFileEntrySettings#setLongSetting(String, long)}. Should be set
+     * in bytes.
      */
     public static final String INDEX_OUTPUT_THRESHOLD_SETTING = "indexOutput.threshold";
 
@@ -57,20 +59,28 @@ public class RAMAndFileJdbcIndexOutput extends IndexOutput implements JdbcIndexC
 
     private long position;
 
-    public void configure(String name, JdbcDirectory jdbcDirectory, JdbcFileEntrySettings settings) throws IOException {
+    protected RAMAndFileJdbcIndexOutput() {
+        super("RAMAndFileJdbcIndexOutput");
+    }
+
+    @Override
+    public void configure(final String name, final JdbcDirectory jdbcDirectory, final JdbcFileEntrySettings settings)
+            throws IOException {
         this.jdbcDirectory = jdbcDirectory;
         this.name = name;
         this.settings = settings;
-        this.threshold = settings.getSettingAsLong(INDEX_OUTPUT_THRESHOLD_SETTING, DEFAULT_THRESHOLD);
+        threshold = settings.getSettingAsLong(INDEX_OUTPUT_THRESHOLD_SETTING, DEFAULT_THRESHOLD);
         ramIndexOutput = createRamJdbcIndexOutput();
         ramIndexOutput.configure(name, jdbcDirectory, settings);
     }
 
-    public void writeByte(byte b) throws IOException {
+    @Override
+    public void writeByte(final byte b) throws IOException {
         switchIfNeeded(1).writeByte(b);
     }
 
-    public void writeBytes(byte[] b, int offset, int length) throws IOException {
+    @Override
+    public void writeBytes(final byte[] b, final int offset, final int length) throws IOException {
         switchIfNeeded(length).writeBytes(b, offset, length);
     }
 
@@ -78,15 +88,17 @@ public class RAMAndFileJdbcIndexOutput extends IndexOutput implements JdbcIndexC
         actualOutput().flush();
     }
 
+    @Override
     public void close() throws IOException {
         actualOutput().close();
     }
 
+    @Override
     public long getFilePointer() {
         return actualOutput().getFilePointer();
     }
 
-    public void seek(long pos) throws IOException {
+    public void seek(final long pos) throws IOException {
         position = pos;
         actualOutput().seek(pos);
     }
@@ -102,7 +114,7 @@ public class RAMAndFileJdbcIndexOutput extends IndexOutput implements JdbcIndexC
         return ramIndexOutput;
     }
 
-    private IndexOutput switchIfNeeded(int length) throws IOException {
+    private IndexOutput switchIfNeeded(final int length) throws IOException {
         if (fileIndexOutput != null) {
             return fileIndexOutput;
         }
@@ -125,5 +137,11 @@ public class RAMAndFileJdbcIndexOutput extends IndexOutput implements JdbcIndexC
 
     protected RAMJdbcIndexOutput createRamJdbcIndexOutput() {
         return new RAMJdbcIndexOutput();
+    }
+
+    @Override
+    public long getChecksum() throws IOException {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }

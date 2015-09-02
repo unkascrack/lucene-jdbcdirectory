@@ -21,64 +21,99 @@ import java.util.List;
 
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
-import org.apache.lucene.store.jdbc.JdbcDirectory;
+
+import com.github.lucene.jdbc.store.JdbcDirectory;
 
 /**
- * A No Operation file entry handler. Performs no actual dirty operations,
- * and returns empty data for read operations.
+ * A No Operation file entry handler. Performs no actual dirty operations, and
+ * returns empty data for read operations.
  *
  * @author kimchy
  */
 public class NoOpFileEntryHandler implements FileEntryHandler {
 
     private static class NoOpIndexInput extends IndexInput {
+
+        protected NoOpIndexInput() {
+            super("NoOpIndexInput");
+        }
+
+        @Override
         public byte readByte() throws IOException {
             return 0;
         }
 
-        public void readBytes(byte[] b, int offset, int len) throws IOException {
+        @Override
+        public void readBytes(final byte[] b, final int offset, final int len) throws IOException {
 
         }
 
+        @Override
         public void close() throws IOException {
 
         }
 
+        @Override
         public long getFilePointer() {
             return 0;
         }
 
-        public void seek(long pos) throws IOException {
+        @Override
+        public void seek(final long pos) throws IOException {
         }
 
+        @Override
         public long length() {
             return 0;
         }
+
+        @Override
+        public IndexInput slice(final String sliceDescription, final long offset, final long length)
+                throws IOException {
+            // TODO Auto-generated method stub
+            return null;
+        }
     }
 
+    @SuppressWarnings("unused")
     private static class NoOpIndexOutput extends IndexOutput {
-        public void writeByte(byte b) throws IOException {
+
+        protected NoOpIndexOutput() {
+            super("NoOpIndexOutput");
+        }
+
+        @Override
+        public void writeByte(final byte b) throws IOException {
 
         }
 
-        public void writeBytes(byte[] b, int offset, int length) throws IOException {
+        @Override
+        public void writeBytes(final byte[] b, final int offset, final int length) throws IOException {
 
         }
 
         public void flush() throws IOException {
         }
 
+        @Override
         public void close() throws IOException {
         }
 
+        @Override
         public long getFilePointer() {
             return 0;
         }
 
-        public void seek(long pos) throws IOException {
+        public void seek(final long pos) throws IOException {
         }
 
         public long length() throws IOException {
+            return 0;
+        }
+
+        @Override
+        public long getChecksum() throws IOException {
+            // TODO Auto-generated method stub
             return 0;
         }
     }
@@ -87,42 +122,53 @@ public class NoOpFileEntryHandler implements FileEntryHandler {
 
     private static IndexOutput indexOutput = new NoOpIndexOutput();
 
-    public void configure(JdbcDirectory jdbcDirectory) {
+    @Override
+    public void configure(final JdbcDirectory jdbcDirectory) {
     }
 
+    @Override
     public boolean fileExists(final String name) throws IOException {
         return false;
     }
 
+    @Override
     public long fileModified(final String name) throws IOException {
         return 0;
     }
 
+    @Override
     public void touchFile(final String name) throws IOException {
     }
 
+    @Override
     public void deleteFile(final String name) throws IOException {
     }
 
-    public List deleteFiles(List names) throws IOException {
+    @Override
+    public List<String> deleteFiles(final List<String> names) throws IOException {
         return null;
     }
 
+    @Override
     public void renameFile(final String from, final String to) throws IOException {
     }
 
+    @Override
     public long fileLength(final String name) throws IOException {
         return 0;
     }
 
-    public IndexInput openInput(String name) throws IOException {
+    @Override
+    public IndexInput openInput(final String name) throws IOException {
         return indexInput;
     }
 
-    public IndexOutput createOutput(String name) throws IOException {
+    @Override
+    public IndexOutput createOutput(final String name) throws IOException {
         return indexOutput;
     }
 
+    @Override
     public void close() throws IOException {
         // do notihng
     }

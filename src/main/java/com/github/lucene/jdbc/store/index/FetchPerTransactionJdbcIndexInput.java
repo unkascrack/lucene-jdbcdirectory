@@ -23,6 +23,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 
+import org.apache.lucene.store.IndexInput;
+
 import com.github.lucene.jdbc.store.JdbcDirectory;
 import com.github.lucene.jdbc.store.JdbcFileEntrySettings;
 import com.github.lucene.jdbc.store.JdbcStoreException;
@@ -30,12 +32,17 @@ import com.github.lucene.jdbc.store.datasource.DataSourceUtils;
 import com.github.lucene.jdbc.store.support.JdbcTable;
 
 /**
- * Caches blobs per transaction. Only supported for dialects that supports blobs per transaction (see
- * {@link org.apache.lucene.store.jdbc.dialect.Dialect#supportTransactionalScopedBlobs()}.
+ * Caches blobs per transaction. Only supported for dialects that supports blobs
+ * per transaction (see
+ * {@link org.apache.lucene.store.jdbc.dialect.Dialect#supportTransactionalScopedBlobs()}
+ * .
  * <p/>
- * Note, using this index input requires calling the {@link #releaseBlobs(java.sql.Connection)} when the transaction
- * ends. It is automatically taken care of if using {@link org.apache.lucene.store.jdbc.datasource.TransactionAwareDataSourceProxy}.
- * If using JTA for example, a transcation synchronization should be registered with JTA to clear the blobs.
+ * Note, using this index input requires calling the
+ * {@link #releaseBlobs(java.sql.Connection)} when the transaction ends. It is
+ * automatically taken care of if using
+ * {@link org.apache.lucene.store.jdbc.datasource.TransactionAwareDataSourceProxy}
+ * . If using JTA for example, a transcation synchronization should be
+ * registered with JTA to clear the blobs.
  *
  * @author kimchy
  */
@@ -43,12 +50,16 @@ public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
 
     private static final Object blobHolderLock = new Object();
 
-    private static final ThreadLocal blobHolder = new ThreadLocal();
+    private static final ThreadLocal<HashMap<Object, HashMap<String, Blob>>> blobHolder = new ThreadLocal<HashMap<Object, HashMap<String, Blob>>>();
 
-    public static void releaseBlobs(Connection connection) {
+    protected FetchPerTransactionJdbcIndexInput() {
+        super("FetchPerTransactionJdbcIndexInput");
+    }
+
+    public static void releaseBlobs(final Connection connection) {
         synchronized (blobHolderLock) {
-            Connection targetConnection = DataSourceUtils.getTargetConnection(connection);
-            HashMap holdersPerConn = (HashMap) blobHolder.get();
+            final Connection targetConnection = DataSourceUtils.getTargetConnection(connection);
+            final HashMap<Object, HashMap<String, Blob>> holdersPerConn = blobHolder.get();
             if (holdersPerConn == null) {
                 return;
             }
@@ -60,39 +71,39 @@ public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
         }
     }
 
-    public static void releaseBlobs(Connection connection, JdbcTable table, String name) {
+    public static void releaseBlobs(final Connection connection, final JdbcTable table, final String name) {
         synchronized (blobHolderLock) {
-            Connection targetConnection = DataSourceUtils.getTargetConnection(connection);
-            HashMap holdersPerConn = (HashMap) blobHolder.get();
+            final Connection targetConnection = DataSourceUtils.getTargetConnection(connection);
+            final HashMap<Object, HashMap<String, Blob>> holdersPerConn = blobHolder.get();
             if (holdersPerConn == null) {
                 return;
             }
-            HashMap holdersPerName = (HashMap) holdersPerConn.get(targetConnection);
+            HashMap<String, Blob> holdersPerName = holdersPerConn.get(targetConnection);
             if (holdersPerName != null) {
                 holdersPerName.remove(name);
             }
-            holdersPerName = (HashMap) holdersPerConn.get(new Integer(System.identityHashCode(targetConnection)));
+            holdersPerName = holdersPerConn.get(new Integer(System.identityHashCode(targetConnection)));
             if (holdersPerName != null) {
                 holdersPerName.remove(table.getName() + name);
             }
         }
     }
 
-    private static Blob getBoundBlob(Connection connection, JdbcTable table, String name) {
+    private static Blob getBoundBlob(final Connection connection, final JdbcTable table, final String name) {
         synchronized (blobHolderLock) {
-            Connection targetConnection = DataSourceUtils.getTargetConnection(connection);
-            HashMap holdersPerConn = (HashMap) blobHolder.get();
+            final Connection targetConnection = DataSourceUtils.getTargetConnection(connection);
+            final HashMap<Object, HashMap<String, Blob>> holdersPerConn = blobHolder.get();
             if (holdersPerConn == null) {
                 return null;
             }
-            HashMap holdersPerName = (HashMap) holdersPerConn.get(targetConnection);
+            HashMap<String, Blob> holdersPerName = holdersPerConn.get(targetConnection);
             if (holdersPerName == null) {
-                holdersPerName = (HashMap) holdersPerConn.get(new Integer(System.identityHashCode(targetConnection)));
+                holdersPerName = holdersPerConn.get(new Integer(System.identityHashCode(targetConnection)));
                 if (holdersPerName == null) {
                     return null;
                 }
             }
-            Blob blob = (Blob) holdersPerName.get(table.getName() + name);
+            final Blob blob = holdersPerName.get(table.getName() + name);
             if (blob != null) {
                 return blob;
             }
@@ -100,19 +111,20 @@ public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
         }
     }
 
-    private static void bindBlob(Connection connection, JdbcTable table, String name, Blob blob) {
+    private static void bindBlob(final Connection connection, final JdbcTable table, final String name,
+            final Blob blob) {
         synchronized (blobHolderLock) {
-            Connection targetConnection = DataSourceUtils.getTargetConnection(connection);
-            HashMap holdersPerCon = (HashMap) blobHolder.get();
+            final Connection targetConnection = DataSourceUtils.getTargetConnection(connection);
+            HashMap<Object, HashMap<String, Blob>> holdersPerCon = blobHolder.get();
             if (holdersPerCon == null) {
-                holdersPerCon = new HashMap();
+                holdersPerCon = new HashMap<Object, HashMap<String, Blob>>();
                 blobHolder.set(holdersPerCon);
             }
-            HashMap holdersPerName = (HashMap) holdersPerCon.get(targetConnection);
+            HashMap<String, Blob> holdersPerName = holdersPerCon.get(targetConnection);
             if (holdersPerName == null) {
-                holdersPerName = (HashMap) holdersPerCon.get(new Integer(System.identityHashCode(targetConnection)));
+                holdersPerName = holdersPerCon.get(new Integer(System.identityHashCode(targetConnection)));
                 if (holdersPerName == null) {
-                    holdersPerName = new HashMap();
+                    holdersPerName = new HashMap<String, Blob>();
                     holdersPerCon.put(targetConnection, holdersPerName);
                     holdersPerCon.put(new Integer(System.identityHashCode(targetConnection)), holdersPerName);
                 }
@@ -131,19 +143,23 @@ public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
 
     private JdbcDirectory jdbcDirectory;
 
-    public void configure(String name, JdbcDirectory jdbcDirectory, JdbcFileEntrySettings settings) throws IOException {
+    @Override
+    public void configure(final String name, final JdbcDirectory jdbcDirectory, final JdbcFileEntrySettings settings)
+            throws IOException {
         super.configure(name, jdbcDirectory, settings);
         this.jdbcDirectory = jdbcDirectory;
         this.name = name;
     }
 
-
-    // Overriding refill here since we can execute a single query to get both the length and the buffer data
-    // resulted in not the nicest OO design, where the buffer information is protected in the JdbcBufferedIndexInput class
+    // Overriding refill here since we can execute a single query to get both
+    // the length and the buffer data
+    // resulted in not the nicest OO design, where the buffer information is
+    // protected in the JdbcBufferedIndexInput class
     // and code duplication between this method and JdbcBufferedIndexInput.
     // Performance is much better this way!
+    @Override
     protected void refill() throws IOException {
-        Connection conn = DataSourceUtils.getConnection(jdbcDirectory.getDataSource());
+        final Connection conn = DataSourceUtils.getConnection(jdbcDirectory.getDataSource());
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
@@ -171,24 +187,26 @@ public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
             } else {
             }
 
-            long start = bufferStart + bufferPosition;
+            final long start = bufferStart + bufferPosition;
             long end = start + bufferSize;
-            if (end > length())				  // don't read past EOF
-              end = length();
-            bufferLength = (int)(end - start);
-            if (bufferLength <= 0)
-              throw new IOException("read past EOF");
+            if (end > length()) {
+                end = length();
+            }
+            bufferLength = (int) (end - start);
+            if (bufferLength <= 0) {
+                throw new IOException("read past EOF");
+            }
 
             if (buffer == null) {
-              buffer = new byte[bufferSize];		  // allocate buffer lazily
-              seekInternal(bufferStart);
+                buffer = new byte[bufferSize]; // allocate buffer lazily
+                seekInternal(bufferStart);
             }
-//            readInternal(buffer, 0, bufferLength);
+            // readInternal(buffer, 0, bufferLength);
             readInternal(blob, buffer, 0, bufferLength);
 
             bufferStart = start;
             bufferPosition = 0;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new JdbcStoreException("Failed to read transactional blob [" + name + "]", e);
         } finally {
             DataSourceUtils.closeResultSet(rs);
@@ -197,8 +215,9 @@ public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
         }
     }
 
+    @Override
     protected synchronized void readInternal(final byte[] b, final int offset, final int length) throws IOException {
-        Connection conn = DataSourceUtils.getConnection(jdbcDirectory.getDataSource());
+        final Connection conn = DataSourceUtils.getConnection(jdbcDirectory.getDataSource());
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
@@ -218,13 +237,13 @@ public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
                 bindBlob(conn, jdbcDirectory.getTable(), name, blob);
 
                 synchronized (this) {
-                    if (this.totalLength == -1) {
-                        this.totalLength = rs.getLong(3);
+                    if (totalLength == -1) {
+                        totalLength = rs.getLong(3);
                     }
                 }
             }
             readInternal(blob, b, offset, length);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new JdbcStoreException("Failed to read transactional blob [" + name + "]", e);
         } finally {
             DataSourceUtils.closeResultSet(rs);
@@ -236,15 +255,16 @@ public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
     /**
      * A helper methods that already reads an open blob
      */
-    private synchronized void readInternal(Blob blob, final byte[] b, final int offset, final int length) throws Exception {
-        long curPos = getFilePointer();
+    private synchronized void readInternal(final Blob blob, final byte[] b, final int offset, final int length)
+            throws Exception {
+        final long curPos = getFilePointer();
         if (curPos + 1 != position) {
             position = curPos + 1;
         }
         if (position + length > length() + 1) {
             System.err.println("BAD");
         }
-        byte[] bytesRead = blob.getBytes(position, length);
+        final byte[] bytesRead = blob.getBytes(position, length);
         if (bytesRead.length != length) {
             throw new IOException("read past EOF");
         }
@@ -252,12 +272,14 @@ public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
         position += bytesRead.length;
     }
 
-    protected void seekInternal(long pos) throws IOException {
-        this.position = pos + 1;
+    @Override
+    protected void seekInternal(final long pos) throws IOException {
+        position = pos + 1;
     }
 
+    @Override
     public void close() throws IOException {
-        Connection conn = DataSourceUtils.getConnection(jdbcDirectory.getDataSource());
+        final Connection conn = DataSourceUtils.getConnection(jdbcDirectory.getDataSource());
         try {
             releaseBlobs(conn, jdbcDirectory.getTable(), name);
         } finally {
@@ -265,15 +287,22 @@ public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
         }
     }
 
+    @Override
     public synchronized long length() {
         if (totalLength == -1) {
             try {
-                this.totalLength = jdbcDirectory.fileLength(name);
-            } catch (IOException e) {
+                totalLength = jdbcDirectory.fileLength(name);
+            } catch (final IOException e) {
                 // do nothing here for now, much better for performance
             }
         }
         return totalLength;
+    }
+
+    @Override
+    public IndexInput slice(final String sliceDescription, final long offset, final long length) throws IOException {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }
