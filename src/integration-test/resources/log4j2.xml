@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout pattern="[%p] %m (%c)%n" />
+		</Console>
+	</Appenders>
+	<Loggers>
+		<Logger name="log4jdbc.debug" level="WARN" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<logger name="log4jdbc.log4j2" level="info" additivity="false">
+			<MarkerFilter marker="LOG4JDBC_OTHER" onMatch="DENY" onMismatch="NEUTRAL" />
+			<appender-ref ref="Console" />
+		</logger>
+		<Root level="debug">
+			<AppenderRef ref="Console" />
+		</Root>
+	</Loggers>
+</Configuration>

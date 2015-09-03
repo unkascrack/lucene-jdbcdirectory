@@ -23,6 +23,8 @@ import java.sql.Types;
 
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Lock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.lucene.store.jdbc.JdbcDirectory;
 import com.github.lucene.store.jdbc.JdbcStoreException;
@@ -48,8 +50,9 @@ import com.github.lucene.store.jdbc.support.JdbcTemplate;
  */
 public class SelectForUpdateLock extends Lock implements JdbcLock {
 
-    private JdbcDirectory jdbcDirectory;
+    private static final Logger logger = LoggerFactory.getLogger(SelectForUpdateLock.class);
 
+    private JdbcDirectory jdbcDirectory;
     private String name;
 
     @Override
@@ -77,7 +80,8 @@ public class SelectForUpdateLock extends Lock implements JdbcLock {
                 });
     }
 
-    public boolean obtain() {
+    @Override
+    public boolean obtain() throws IOException {
         try {
             return ((Boolean) jdbcDirectory.getJdbcTemplate().executeSelect(
                     jdbcDirectory.getTable().sqlSelectNameForUpdateNoWait(), new JdbcTemplate.ExecuteSelectCallback() {
@@ -102,13 +106,17 @@ public class SelectForUpdateLock extends Lock implements JdbcLock {
         }
     }
 
-    public void release() {
+    @Override
+    public void close() throws IOException {
         // no way to activly release a select for update lock
         // when the transaction commits or rolls back, it will be released
     }
 
-    public boolean isLocked() {
-        // no way to know if it is locked or not
+    @Override
+    public void ensureValid() throws IOException {
+        // TODO Auto-generated method stub
+        logger.debug("SelectForUpdateLock.ensureValid()");
+        // TODO no way to know if it is locked or not?
         throw new IllegalStateException("SelectForUpdate lock does not support is locked");
     }
 
@@ -116,17 +124,4 @@ public class SelectForUpdateLock extends Lock implements JdbcLock {
     public String toString() {
         return "SelectForUpdateLock[" + name + "/" + jdbcDirectory.getTable() + "]";
     }
-
-    @Override
-    public void close() throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void ensureValid() throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
 }

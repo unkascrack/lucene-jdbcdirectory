@@ -22,6 +22,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import org.apache.lucene.store.IndexInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.lucene.store.jdbc.JdbcDirectory;
 import com.github.lucene.store.jdbc.JdbcFileEntrySettings;
@@ -38,11 +40,13 @@ import com.github.lucene.store.jdbc.support.JdbcTemplate;
  */
 public class FetchOnOpenJdbcIndexInput extends IndexInput implements JdbcIndexConfigurable {
 
+    private static final Logger logger = LoggerFactory.getLogger(FetchOnOpenJdbcIndexInput.class);
+
     // There is no synchronizaiton since Lucene RAMDirecoty performs no
     // synchronizations.
     // Need to get to the bottom of it.
 
-    protected FetchOnOpenJdbcIndexInput() {
+    public FetchOnOpenJdbcIndexInput() {
         super("FetchOnOpenJdbcIndexInput");
     }
 
@@ -115,6 +119,7 @@ public class FetchOnOpenJdbcIndexInput extends IndexInput implements JdbcIndexCo
     @Override
     public IndexInput slice(final String sliceDescription, final long offset, final long length) throws IOException {
         // TODO Auto-generated method stub
+        logger.debug("FetchOnOpenJdbcIndexInput.slice()");
         return null;
     }
 }

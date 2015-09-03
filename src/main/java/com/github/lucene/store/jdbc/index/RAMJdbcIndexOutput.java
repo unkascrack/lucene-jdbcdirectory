@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import org.apache.lucene.store.IndexOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.lucene.store.jdbc.JdbcDirectory;
 import com.github.lucene.store.jdbc.JdbcFileEntrySettings;
@@ -35,7 +37,9 @@ import com.github.lucene.store.jdbc.JdbcFileEntrySettings;
  */
 public class RAMJdbcIndexOutput extends AbstractJdbcIndexOutput {
 
-    protected RAMJdbcIndexOutput() {
+    private static final Logger logger = LoggerFactory.getLogger(RAMJdbcIndexOutput.class);
+
+    public RAMJdbcIndexOutput() {
         super("RAMAndFileJdbcIndexOutput");
     }
 
@@ -195,6 +199,7 @@ public class RAMJdbcIndexOutput extends AbstractJdbcIndexOutput {
     @Override
     public long getChecksum() throws IOException {
         // TODO Auto-generated method stub
+        logger.debug("RAMJdbcIndexOutput.getChecksum()");
         return 0;
     }
 }

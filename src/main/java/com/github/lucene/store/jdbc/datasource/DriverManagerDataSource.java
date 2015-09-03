@@ -22,6 +22,8 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
 
+import org.slf4j.LoggerFactory;
+
 /**
  * Simple implementation of the standard JDBC DataSource interface, configuring
  * a plain old JDBC Driver via bean properties, and returning a new Connection
@@ -44,6 +46,8 @@ import java.util.logging.Logger;
  * @author kimchy
  */
 public class DriverManagerDataSource extends AbstractDataSource {
+
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DriverManagerDataSource.class);
 
     private String driverClassName;
 
@@ -262,6 +266,7 @@ public class DriverManagerDataSource extends AbstractDataSource {
     @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
         // TODO Auto-generated method stub
+        logger.debug("DriverManagerDataSource.getParentLogger()");
         return null;
     }
 

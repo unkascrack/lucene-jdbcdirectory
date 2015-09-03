@@ -18,7 +18,6 @@ package com.github.lucene.store.jdbc;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +32,6 @@ import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,8 +43,6 @@ import com.github.lucene.store.jdbc.datasource.DataSourceUtils;
  */
 public class SimpleVsITest extends AbstractJdbcDirectoryITest {
 
-    private final boolean DISABLE = true;
-
     private Directory fsDir;
     private Directory ramDir;
     private Directory jdbcDir;
@@ -55,12 +51,9 @@ public class SimpleVsITest extends AbstractJdbcDirectoryITest {
 
     @Before
     public void setUp() throws Exception {
-        ramDir = new RAMDirectory();
-
-        final Path path = FileSystems.getDefault().getPath("target/index");
-
-        fsDir = FSDirectory.open(path);
         jdbcDir = new JdbcDirectory(dataSource, createDialect(), "TEST");
+        ramDir = new RAMDirectory();
+        fsDir = FSDirectory.open(FileSystems.getDefault().getPath("target/index"));
 
         final Connection con = DataSourceUtils.getConnection(dataSource);
         ((JdbcDirectory) jdbcDir).create();
@@ -70,14 +63,11 @@ public class SimpleVsITest extends AbstractJdbcDirectoryITest {
 
     @Test
     public void testTiming() throws IOException {
-        if (DISABLE) {
-            return;
-        }
         final long ramTiming = timeIndexWriter(ramDir);
         final long fsTiming = timeIndexWriter(fsDir);
         final long jdbcTiming = timeIndexWriter(jdbcDir);
 
-        Assert.assertTrue(fsTiming > ramTiming);
+        // Assert.assertTrue(fsTiming > ramTiming);
 
         System.out.println("RAMDirectory Time: " + ramTiming + " ms");
         System.out.println("FSDirectory Time : " + fsTiming + " ms");
@@ -102,14 +92,6 @@ public class SimpleVsITest extends AbstractJdbcDirectoryITest {
             @Override
             public void doInDirectoryWithoutResult(final Directory dir) throws IOException {
                 final IndexWriter writer = new IndexWriter(dir, config);
-
-                /**
-                 * // change to adjust performance of indexing with FSDirectory
-                 * writer.mergeFactor = writer.mergeFactor; writer.maxMergeDocs
-                 * = writer.maxMergeDocs; writer.minMergeDocs =
-                 * writer.minMergeDocs;
-                 */
-
                 for (final Object element : docs) {
                     final Document doc = new Document();
                     final String word = (String) element;
@@ -124,7 +106,7 @@ public class SimpleVsITest extends AbstractJdbcDirectoryITest {
                     // Field.Index.TOKENIZED));
                     doc.add(new StringField("keyword", word, Field.Store.YES));
                     doc.add(new StringField("unindexed", word, Field.Store.YES));
-                    doc.add(new StringField("unstored", word, Field.Store.YES));
+                    doc.add(new StringField("unstored", word, Field.Store.NO));
                     doc.add(new StringField("text", word, Field.Store.YES));
 
                     writer.addDocument(doc);

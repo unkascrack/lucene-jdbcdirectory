@@ -30,6 +30,8 @@ import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
+import org.slf4j.LoggerFactory;
+
 import com.github.lucene.store.jdbc.index.FetchPerTransactionJdbcIndexInput;
 
 /**
@@ -82,6 +84,8 @@ import com.github.lucene.store.jdbc.index.FetchPerTransactionJdbcIndexInput;
  * @see com.github.lucene.store.DirectoryTemplate
  */
 public class TransactionAwareDataSourceProxy implements DataSource {
+
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(TransactionAwareDataSourceProxy.class);
 
     private static ThreadLocal<Map<DataSource, Connection>> connectionHolders = new ThreadLocal<Map<DataSource, Connection>>();
 
@@ -267,6 +271,7 @@ public class TransactionAwareDataSourceProxy implements DataSource {
     @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
         // TODO Auto-generated method stub
+        logger.debug("TransactionAwareDataSourceProxy.getParentLogger()");
         return null;
     }
 

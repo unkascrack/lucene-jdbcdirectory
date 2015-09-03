@@ -24,6 +24,8 @@ import java.sql.ResultSet;
 import java.util.HashMap;
 
 import org.apache.lucene.store.IndexInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.lucene.store.jdbc.JdbcDirectory;
 import com.github.lucene.store.jdbc.JdbcFileEntrySettings;
@@ -48,11 +50,13 @@ import com.github.lucene.store.jdbc.support.JdbcTable;
  */
 public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
 
+    private static final Logger logger = LoggerFactory.getLogger(FetchPerTransactionJdbcIndexInput.class);
+
     private static final Object blobHolderLock = new Object();
 
     private static final ThreadLocal<HashMap<Object, HashMap<String, Blob>>> blobHolder = new ThreadLocal<HashMap<Object, HashMap<String, Blob>>>();
 
-    protected FetchPerTransactionJdbcIndexInput() {
+    public FetchPerTransactionJdbcIndexInput() {
         super("FetchPerTransactionJdbcIndexInput");
     }
 
@@ -302,6 +306,7 @@ public class FetchPerTransactionJdbcIndexInput extends JdbcBufferedIndexInput {
     @Override
     public IndexInput slice(final String sliceDescription, final long offset, final long length) throws IOException {
         // TODO Auto-generated method stub
+        logger.debug("FetchPerTransactionJdbcIndexInput.slice()");
         return null;
     }
 

@@ -22,6 +22,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import org.apache.lucene.store.IndexInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.lucene.store.jdbc.JdbcDirectory;
 import com.github.lucene.store.jdbc.JdbcFileEntrySettings;
@@ -36,6 +38,8 @@ import com.github.lucene.store.jdbc.support.JdbcTemplate;
  */
 public class FetchOnBufferReadJdbcIndexInput extends JdbcBufferedIndexInput {
 
+    private static final Logger logger = LoggerFactory.getLogger(FetchOnBufferReadJdbcIndexInput.class);
+
     private String name;
 
     // lazy intialize the length
@@ -45,7 +49,7 @@ public class FetchOnBufferReadJdbcIndexInput extends JdbcBufferedIndexInput {
 
     private JdbcDirectory jdbcDirectory;
 
-    protected FetchOnBufferReadJdbcIndexInput() {
+    public FetchOnBufferReadJdbcIndexInput() {
         super("FetchOnBufferReadJdbcIndexInput");
     }
 
@@ -183,6 +187,7 @@ public class FetchOnBufferReadJdbcIndexInput extends JdbcBufferedIndexInput {
     @Override
     public IndexInput slice(final String sliceDescription, final long offset, final long length) throws IOException {
         // TODO Auto-generated method stub
+        logger.debug("FetchOnBufferReadJdbcIndexInput.slice()");
         return null;
     }
 }

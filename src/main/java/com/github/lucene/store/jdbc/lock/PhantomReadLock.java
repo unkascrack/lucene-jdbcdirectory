@@ -42,7 +42,7 @@ import com.github.lucene.store.jdbc.support.JdbcTemplate;
  */
 public class PhantomReadLock extends Lock implements JdbcLock {
 
-    private static final Logger log = LoggerFactory.getLogger(PhantomReadLock.class);
+    private static final Logger logger = LoggerFactory.getLogger(PhantomReadLock.class);
 
     private JdbcDirectory jdbcDirectory;
 
@@ -59,14 +59,13 @@ public class PhantomReadLock extends Lock implements JdbcLock {
         // do nothing
     }
 
-    public boolean obtain() {
+    @Override
+    public boolean obtain() throws IOException {
         try {
             if (jdbcDirectory.getDialect().useExistsBeforeInsertLock()) {
                 // there are databases where the fact that an exception was
-                // thrown
-                // invalidates the connection. So first we check if it exists,
-                // and
-                // then insert it.
+                // thrown invalidates the connection. So first we check if it
+                // exists, and then insert it.
                 if (jdbcDirectory.fileExists(name)) {
                     return false;
                 }
@@ -83,53 +82,36 @@ public class PhantomReadLock extends Lock implements JdbcLock {
                         }
                     });
         } catch (final Exception e) {
-            if (log.isTraceEnabled()) {
-                log.trace("Obtain Lock exception (might be valid) [" + e.getMessage() + "]");
+            if (logger.isTraceEnabled()) {
+                logger.trace("Obtain Lock exception (might be valid) [" + e.getMessage() + "]");
             }
             return false;
         }
         return true;
     }
 
-    public void release() {
-        try {
-            jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlDeleteByName(),
-                    new JdbcTemplate.PrepateStatementAwareCallback() {
-                        @Override
-                        public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
-                            ps.setFetchSize(1);
-                            ps.setString(1, name);
-                        }
-                    });
-        } catch (final Exception e) {
-            if (log.isTraceEnabled()) {
-                log.trace("Release Lock exception (might be valid) [" + e.getMessage() + "]");
-            }
-        }
+    @Override
+    public void close() throws IOException {
+        jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlDeleteByName(),
+                new JdbcTemplate.PrepateStatementAwareCallback() {
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                        ps.setFetchSize(1);
+                        ps.setString(1, name);
+                    }
+                });
     }
 
-    public boolean isLocked() {
-        try {
-            return jdbcDirectory.fileExists(name);
-        } catch (final Exception e) {
-            return false;
+    @Override
+    public void ensureValid() throws IOException {
+        if (!jdbcDirectory.fileExists(name)) {
+            // TODO should throw JdbcException??
+            logger.debug("PhantomReadLock.ensureValid() - file not exists: {}", name);
         }
     }
 
     @Override
     public String toString() {
         return "PhantomReadLock[" + name + "/" + jdbcDirectory.getTable() + "]";
-    }
-
-    @Override
-    public void close() throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void ensureValid() throws IOException {
-        // TODO Auto-generated method stub
-
     }
 }

@@ -43,6 +43,13 @@ public interface JdbcLock {
      *
      * @param jdbcDirectory
      *            The directory owning the lock
+     * @throws java.io.IOException
      */
     void initializeDatabase(JdbcDirectory jdbcDirectory) throws IOException;
+
+    /**
+     * @return
+     * @throws java.io.IOException
+     */
+    public boolean obtain() throws IOException;
 }

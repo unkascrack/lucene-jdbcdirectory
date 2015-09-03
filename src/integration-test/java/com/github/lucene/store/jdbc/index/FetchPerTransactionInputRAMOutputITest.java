@@ -19,9 +19,6 @@ package com.github.lucene.store.jdbc.index;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 
-import com.github.lucene.store.jdbc.index.FetchPerTransactionJdbcIndexInput;
-import com.github.lucene.store.jdbc.index.RAMJdbcIndexOutput;
-
 /**
  * @author kimchy
  */
@@ -31,7 +28,6 @@ public class FetchPerTransactionInputRAMOutputITest extends AbstractIndexInputOu
     public void setUp() throws Exception {
         super.setUp();
         if (!jdbcDirectory.getDialect().supportTransactionalScopedBlobs()) {
-            disable = true;
             System.out.println("Dialect does not support transacitonal blobs, not testing");
         }
     }

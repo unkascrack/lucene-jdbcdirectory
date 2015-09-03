@@ -16,11 +16,14 @@
 
 package com.github.lucene.store.jdbc;
 
+import java.io.IOException;
 import java.sql.Connection;
 
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Lock;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.github.lucene.store.jdbc.datasource.DataSourceUtils;
@@ -31,60 +34,73 @@ import com.github.lucene.store.jdbc.support.JdbcTable;
  */
 public class JdbcDirectoryLockITest extends AbstractJdbcDirectoryITest {
 
-    private final boolean DISABLE = true;
+    private JdbcDirectory dir1;
+    private JdbcDirectory dir2;
 
-    @Test
-    public void testLocks() throws Exception {
-        if (DISABLE) {
-            return;
-        }
+    @Before
+    public void setUp() throws Exception {
         final JdbcDirectorySettings settings = new JdbcDirectorySettings();
         settings.setQueryTimeout(1);
 
-        final JdbcDirectory dir1 = new JdbcDirectory(dataSource, new JdbcTable(settings, createDialect(), "TEST"));
-        Connection con1 = DataSourceUtils.getConnection(dataSource);
+        dir1 = new JdbcDirectory(dataSource, new JdbcTable(settings, createDialect(), "TEST"));
         dir1.create();
-        DataSourceUtils.commitConnectionIfPossible(con1);
-        DataSourceUtils.releaseConnection(con1);
 
-        final JdbcDirectory dir2 = new JdbcDirectory(dataSource, new JdbcTable(settings, createDialect(), "TEST"));
+        dir2 = new JdbcDirectory(dataSource, new JdbcTable(settings, createDialect(), "TEST"));
+    }
 
+    @After
+    public void tearDown() throws Exception {
+        dir1.close();
+        dir2.close();
+    }
+
+    @Test
+    public void testLocks() throws Exception {
         try {
-            // shoudl work
-            con1 = DataSourceUtils.getConnection(dataSource);
-            final Lock lock1 = dir1.makeLock(IndexWriter.WRITE_LOCK_NAME);
+            final Connection con1 = DataSourceUtils.getConnection(dataSource);
+            final Lock lock1 = dir1.obtainLock(IndexWriter.WRITE_LOCK_NAME);
 
-            boolean obtained = lock1.obtain();
-            Assert.assertTrue(obtained);
+            lock1.ensureValid();
 
             final Connection con2 = DataSourceUtils.getConnection(dataSource);
-            final Lock lock2 = dir2.makeLock(IndexWriter.WRITE_LOCK_NAME);
+            final Lock lock2 = dir2.obtainLock(IndexWriter.WRITE_LOCK_NAME);
 
-            obtained = lock2.obtain();
-            Assert.assertFalse(obtained);
+            try {
+                lock2.ensureValid();
+                Assert.fail("lock2 should not have valid lock");
+            } catch (final IOException e) {
+            }
 
-            obtained = lock2.obtain();
-            Assert.assertFalse(obtained);
-
-            lock1.release();
+            lock1.close();
 
             DataSourceUtils.commitConnectionIfPossible(con1);
             DataSourceUtils.releaseConnection(con1);
 
-            obtained = lock2.obtain();
-            Assert.assertTrue(obtained);
+            lock2.ensureValid();
 
             DataSourceUtils.commitConnectionIfPossible(con2);
             DataSourceUtils.releaseConnection(con2);
+
+            // final Lock lock1 = dir1.obtainLock(IndexWriter.WRITE_LOCK_NAME);
+            // lock1.ensureValid();
+            //
+            // final Lock lock2 = dir2.obtainLock(IndexWriter.WRITE_LOCK_NAME);
+            // try {
+            // lock2.ensureValid();
+            // Assert.fail("lock2 should not have valid lock");
+            // } catch (final IOException e) {
+            // }
+            //
+            // lock1.close();
+            //
+            // try {
+            // lock2.ensureValid();
+            // } catch (final IOException e) {
+            // Assert.fail("lock2 should have valid lock");
+            // }
+
         } finally {
-            try {
-                con1 = DataSourceUtils.getConnection(dataSource);
-                dir1.delete();
-                DataSourceUtils.commitConnectionIfPossible(con1);
-                DataSourceUtils.releaseConnection(con1);
-            } catch (final Exception e) {
-                e.printStackTrace(System.out);
-            }
+            dir1.delete();
         }
     }
 }

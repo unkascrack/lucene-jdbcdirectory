@@ -34,6 +34,8 @@ import com.github.lucene.store.jdbc.dialect.Dialect;
 import com.github.lucene.store.jdbc.dialect.DialectResolver;
 import com.github.lucene.store.jdbc.support.JdbcTemplate;
 
+import net.sf.log4jdbc.sql.jdbcapi.DataSourceSpy;
+
 /**
  * @author kimchy
  */
@@ -73,7 +75,11 @@ public abstract class AbstractJdbcDirectoryITest {
         final String password = "";
         final DriverManagerDataSource driverManagerDataSource = new DriverManagerDataSource(driver, url, username,
                 password, false);
-        dataSource = new TransactionAwareDataSourceProxy(driverManagerDataSource);
+        // dataSource = new
+        // TransactionAwareDataSourceProxy(driverManagerDataSource);
+        // dataSource = new DataSourceSpy(new
+        // TransactionAwareDataSourceProxy(driverManagerDataSource));
+        dataSource = new TransactionAwareDataSourceProxy(new DataSourceSpy(driverManagerDataSource));
         dialect = "com.github.lucene.store.jdbc.dialect.HSQLDialect";
         jdbcTemplate = new JdbcTemplate(dataSource);
     }

@@ -21,6 +21,8 @@ import java.util.List;
 
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.lucene.store.jdbc.JdbcDirectory;
 
@@ -31,6 +33,8 @@ import com.github.lucene.store.jdbc.JdbcDirectory;
  * @author kimchy
  */
 public class NoOpFileEntryHandler implements FileEntryHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(NoOpFileEntryHandler.class);
 
     private static class NoOpIndexInput extends IndexInput {
 
@@ -71,6 +75,7 @@ public class NoOpFileEntryHandler implements FileEntryHandler {
         public IndexInput slice(final String sliceDescription, final long offset, final long length)
                 throws IOException {
             // TODO Auto-generated method stub
+            logger.debug("NoOpFileEntryHandler.NoOpIndexInput.slice()");
             return null;
         }
     }
@@ -114,6 +119,7 @@ public class NoOpFileEntryHandler implements FileEntryHandler {
         @Override
         public long getChecksum() throws IOException {
             // TODO Auto-generated method stub
+            logger.debug("NoOpFileEntryHandler.NoOpIndexOutput.slice()");
             return 0;
         }
     }

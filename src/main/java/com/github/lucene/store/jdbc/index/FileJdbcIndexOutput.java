@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.lucene.store.jdbc.JdbcDirectory;
 import com.github.lucene.store.jdbc.JdbcFileEntrySettings;
 
@@ -37,11 +40,13 @@ import com.github.lucene.store.jdbc.JdbcFileEntrySettings;
  */
 public class FileJdbcIndexOutput extends AbstractJdbcIndexOutput {
 
+    private static final Logger logger = LoggerFactory.getLogger(FileJdbcIndexOutput.class);
+
     private RandomAccessFile file = null;
 
     private File tempFile;
 
-    protected FileJdbcIndexOutput() {
+    public FileJdbcIndexOutput() {
         super("FileJdbcIndexOutput");
     }
 
@@ -96,6 +101,7 @@ public class FileJdbcIndexOutput extends AbstractJdbcIndexOutput {
     @Override
     public long getChecksum() throws IOException {
         // TODO Auto-generated method stub
+        logger.debug("FileJdbcIndexOutput.getChecksum()");
         return 0;
     }
 }

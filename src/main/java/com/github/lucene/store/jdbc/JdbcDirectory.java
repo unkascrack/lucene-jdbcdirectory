@@ -34,6 +34,8 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.Lock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.lucene.store.DirectoryTemplate;
 import com.github.lucene.store.MultiDeleteDirectory;
@@ -102,6 +104,8 @@ import com.github.lucene.store.jdbc.support.LuceneFileNames;
  * @author kimchy
  */
 public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
+
+    private static final Logger logger = LoggerFactory.getLogger(JdbcDirectory.class);
 
     private Dialect dialect;
 
@@ -220,6 +224,10 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
         }
     }
 
+    /***********************************************************************************************
+     * CUSTOM METHODS
+     ***********************************************************************************************/
+
     /**
      * Returns <code>true</code> if the database table exists.
      *
@@ -251,6 +259,15 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
     }
 
     /**
+     * @param name
+     * @return
+     * @throws java.io.IOException
+     */
+    public boolean fileExists(final String name) throws IOException {
+        return getFileEntryHandler(name).fileExists(name);
+    }
+
+    /**
      * Deletes the database table (drops it) from the database.
      *
      * @throws java.io.IOException
@@ -278,7 +295,7 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
         try {
             delete();
         } catch (final Exception e) {
-            // e.printStackTrace();
+            logger.warn("Could not delete database: " + e.getMessage());
         }
         jdbcTemplate.executeUpdate(table.sqlCreate());
         ((JdbcLock) createLock()).initializeDatabase(this);
@@ -299,7 +316,8 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
      * marked "delta" time ago (base on database time, if possible by dialect).
      * The delta is taken from
      * {@link org.apache.lucene.store.jdbc.JdbcDirectorySettings#getDeleteMarkDeletedDelta()}
-     * .
+     *
+     * @throws java.io.IOException
      */
     public void deleteMarkDeleted() throws IOException {
         deleteMarkDeleted(settings.getDeleteMarkDeletedDelta());
@@ -308,6 +326,9 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
     /**
      * Delets all the file entries that are marked to be deleted, and they were
      * marked "delta" time ago (base on database time, if possible by dialect).
+     *
+     * @param delta
+     * @throws java.io.IOException
      */
     public void deleteMarkDeleted(final long delta) throws IOException {
         long currentTime = System.currentTimeMillis();
@@ -330,6 +351,7 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
             } else {
                 currentTime = ((Long) jdbcTemplate.executeSelect(timestampSelectString,
                         new JdbcTemplate.ExecuteSelectCallback() {
+
                             @Override
                             public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
                                 // nothing to do here
@@ -355,7 +377,54 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
                 });
     }
 
-    public String[] list() throws IOException {
+    /**
+     * @param name
+     * @throws java.io.IOException
+     */
+    public void forceDeleteFile(final String name) throws IOException {
+        jdbcTemplate.executeUpdate(table.sqlDeleteByName(), new JdbcTemplate.PrepateStatementAwareCallback() {
+            @Override
+            public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                ps.setFetchSize(1);
+                ps.setString(1, name);
+            }
+        });
+    }
+
+    /**
+     * @return
+     * @throws IOException
+     */
+    protected Lock createLock() throws IOException {
+        try {
+            return settings.getLockClass().newInstance();
+        } catch (final Exception e) {
+            throw new JdbcStoreException("Failed to create lock class [" + settings.getLockClass() + "]");
+        }
+    }
+
+    /**
+     * @param name
+     * @return
+     */
+    protected FileEntryHandler getFileEntryHandler(final String name) {
+        FileEntryHandler handler = fileEntryHandlers.get(name.substring(name.length() - 3));
+        if (handler != null) {
+            return handler;
+        }
+        handler = fileEntryHandlers.get(name);
+        if (handler != null) {
+            return handler;
+        }
+        return fileEntryHandlers.get(JdbcDirectorySettings.DEFAULT_FILE_ENTRY);
+    }
+
+    /***********************************************************************************************
+     * DIRECTORY METHODS
+     ***********************************************************************************************/
+
+    @Override
+    public String[] listAll() throws IOException {
         return (String[]) jdbcTemplate.executeSelect(table.sqlSelectNames(), new JdbcTemplate.ExecuteSelectCallback() {
             @Override
             public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
@@ -373,36 +442,73 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
         });
     }
 
-    public boolean fileExists(final String name) throws IOException {
-        return getFileEntryHandler(name).fileExists(name);
-    }
-
-    public long fileModified(final String name) throws IOException {
-        return getFileEntryHandler(name).fileModified(name);
-    }
-
-    public void touchFile(final String name) throws IOException {
-        getFileEntryHandler(name).touchFile(name);
-    }
-
     @Override
     public void deleteFile(final String name) throws IOException {
         if (LuceneFileNames.isStaticFile(name)) {
+            // TODO is necessary??
             forceDeleteFile(name);
         } else {
             getFileEntryHandler(name).deleteFile(name);
         }
     }
 
-    public void forceDeleteFile(final String name) throws IOException {
-        jdbcTemplate.executeUpdate(table.sqlDeleteByName(), new JdbcTemplate.PrepateStatementAwareCallback() {
-            @Override
-            public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
-                ps.setFetchSize(1);
-                ps.setString(1, name);
-            }
-        });
+    @Override
+    public long fileLength(final String name) throws IOException {
+        return getFileEntryHandler(name).fileLength(name);
     }
+
+    @Override
+    public IndexOutput createOutput(final String name, final IOContext context) throws IOException {
+        if (LuceneFileNames.isStaticFile(name)) {
+            // TODO is necessary??
+            logger.debug("JdbcDirectory.createOutput().isStaticFile()");
+            forceDeleteFile(name);
+        }
+        return getFileEntryHandler(name).createOutput(name);
+    }
+
+    @Override
+    public IndexInput openInput(final String name, final IOContext context) throws IOException {
+        return getFileEntryHandler(name).openInput(name);
+    }
+
+    @Override
+    public void sync(final Collection<String> names) throws IOException {
+        // TODO Auto-generated method stub
+        logger.debug("JdbcDirectory.sync()");
+    }
+
+    @Override
+    public void renameFile(final String from, final String to) throws IOException {
+        getFileEntryHandler(from).renameFile(from, to);
+    }
+
+    @Override
+    public Lock obtainLock(final String name) throws IOException {
+        final Lock lock = createLock();
+        ((JdbcLock) lock).configure(this, name);
+        ((JdbcLock) lock).obtain();
+        return lock;
+    }
+
+    @Override
+    public void close() throws IOException {
+        IOException last = null;
+        for (final FileEntryHandler fileEntryHandler : fileEntryHandlers.values()) {
+            try {
+                fileEntryHandler.close();
+            } catch (final IOException e) {
+                last = e;
+            }
+        }
+        if (last != null) {
+            throw last;
+        }
+    }
+
+    /***********************************************************************************************
+     * MULTIDELETEDIRECTORY METHOD
+     ***********************************************************************************************/
 
     @Override
     public List<String> deleteFiles(final List<String> names) throws IOException {
@@ -427,76 +533,9 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
         return notDeleted;
     }
 
-    @Override
-    public void renameFile(final String from, final String to) throws IOException {
-        getFileEntryHandler(from).renameFile(from, to);
-    }
-
-    @Override
-    public long fileLength(final String name) throws IOException {
-        return getFileEntryHandler(name).fileLength(name);
-    }
-
-    public IndexInput openInput(final String name) throws IOException {
-        return getFileEntryHandler(name).openInput(name);
-    }
-
-    public IndexOutput createOutput(final String name) throws IOException {
-        if (LuceneFileNames.isStaticFile(name)) {
-            forceDeleteFile(name);
-        }
-        return getFileEntryHandler(name).createOutput(name);
-    }
-
-    public Lock makeLock(final String name) {
-        try {
-            final Lock lock = createLock();
-            ((JdbcLock) lock).configure(this, name);
-            return lock;
-        } catch (final IOException e) {
-            // shoule not happen
-            return null;
-        }
-    }
-
-    /**
-     * Closes the directory.
-     */
-    @Override
-    public void close() throws IOException {
-        IOException last = null;
-        for (final FileEntryHandler fileEntryHandler : fileEntryHandlers.values()) {
-            try {
-                fileEntryHandler.close();
-            } catch (final IOException e) {
-                last = e;
-            }
-        }
-        if (last != null) {
-            throw last;
-        }
-    }
-
-    protected FileEntryHandler getFileEntryHandler(final String name) {
-        FileEntryHandler handler = fileEntryHandlers.get(name.substring(name.length() - 3));
-        if (handler != null) {
-            return handler;
-        }
-        handler = fileEntryHandlers.get(name);
-        if (handler != null) {
-            return handler;
-        }
-        return fileEntryHandlers.get(JdbcDirectorySettings.DEFAULT_FILE_ENTRY);
-
-    }
-
-    protected Lock createLock() throws IOException {
-        try {
-            return settings.getLockClass().newInstance();
-        } catch (final Exception e) {
-            throw new JdbcStoreException("Failed to create lock class [" + settings.getLockClass() + "]");
-        }
-    }
+    /***********************************************************************************************
+     * SETTER/GETTERS METHODS
+     ***********************************************************************************************/
 
     public Dialect getDialect() {
         return dialect;
@@ -518,33 +557,4 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
         return dataSource;
     }
 
-    @Override
-    public String[] listAll() throws IOException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public IndexOutput createOutput(final String name, final IOContext context) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void sync(final Collection<String> names) throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public IndexInput openInput(final String name, final IOContext context) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Lock obtainLock(final String name) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
-    }
 }

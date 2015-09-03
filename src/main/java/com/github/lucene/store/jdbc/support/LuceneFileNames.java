@@ -36,6 +36,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.lucene.index.IndexFileNames;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A set of utility methods for index file names.
@@ -43,6 +45,8 @@ import org.apache.lucene.index.IndexFileNames;
  * @author kimchy
  */
 public class LuceneFileNames {
+
+    public static final Logger logger = LoggerFactory.getLogger(LuceneFileNames.class);
 
     private static final Set<String> staticFiles;
 
@@ -60,6 +64,7 @@ public class LuceneFileNames {
      * is updated and changed by Lucene.
      */
     public static boolean isStaticFile(final String name) {
+        logger.debug("LuceneFileNames.isStaticFile({})", name);
         return staticFiles.contains(name);
     }
 
@@ -67,6 +72,7 @@ public class LuceneFileNames {
      * Returns if the name is a segment file or not.
      */
     public static boolean isSegmentsFile(final String name) {
+        logger.debug("LuceneFileNames.isSegmentsFile({})", name);
         return name.equals(IndexFileNames.SEGMENTS) || name.equals(IndexFileNames.OLD_SEGMENTS_GEN)
                 || name.equals(IndexFileNames.PENDING_SEGMENTS);
     }

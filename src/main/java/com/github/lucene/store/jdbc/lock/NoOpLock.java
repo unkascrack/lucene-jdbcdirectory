@@ -39,26 +39,18 @@ public class NoOpLock extends Lock implements JdbcLock {
         // do nothing
     }
 
+    @Override
     public boolean obtain() throws IOException {
         return true;
     }
 
-    public void release() {
-        // do nothing
-    }
-
-    public boolean isLocked() {
-        return false;
-    }
-
     @Override
     public void close() throws IOException {
-        // TODO Auto-generated method stub
-
+        // do nothing
     }
 
     @Override
     public void ensureValid() throws IOException {
-        // TODO Auto-generated method stub
+        // do nothing
     }
 }
