@@ -17,7 +17,10 @@
 package com.github.lucene.store.jdbc.index;
 
 import java.io.IOException;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 
+import org.apache.lucene.store.BufferedChecksum;
 import org.apache.lucene.store.IndexOutput;
 
 import com.github.lucene.store.jdbc.JdbcDirectory;
@@ -59,8 +62,11 @@ public class RAMAndFileJdbcIndexOutput extends IndexOutput implements JdbcIndexC
 
     private long position;
 
+    private final Checksum crc;
+
     protected RAMAndFileJdbcIndexOutput() {
         super("RAMAndFileJdbcIndexOutput");
+        crc = new BufferedChecksum(new CRC32());
     }
 
     @Override
@@ -77,15 +83,13 @@ public class RAMAndFileJdbcIndexOutput extends IndexOutput implements JdbcIndexC
     @Override
     public void writeByte(final byte b) throws IOException {
         switchIfNeeded(1).writeByte(b);
+        crc.update(b);
     }
 
     @Override
     public void writeBytes(final byte[] b, final int offset, final int length) throws IOException {
         switchIfNeeded(length).writeBytes(b, offset, length);
-    }
-
-    public void flush() throws IOException {
-        actualOutput().flush();
+        crc.update(b, offset, length);
     }
 
     @Override
@@ -98,13 +102,9 @@ public class RAMAndFileJdbcIndexOutput extends IndexOutput implements JdbcIndexC
         return actualOutput().getFilePointer();
     }
 
-    public void seek(final long pos) throws IOException {
-        position = pos;
-        actualOutput().seek(pos);
-    }
-
-    public long length() throws IOException {
-        return actualOutput().length();
+    @Override
+    public long getChecksum() throws IOException {
+        return crc.getValue();
     }
 
     private IndexOutput actualOutput() {
@@ -139,9 +139,4 @@ public class RAMAndFileJdbcIndexOutput extends IndexOutput implements JdbcIndexC
         return new RAMJdbcIndexOutput();
     }
 
-    @Override
-    public long getChecksum() throws IOException {
-        // TODO Auto-generated method stub
-        return 0;
-    }
 }
