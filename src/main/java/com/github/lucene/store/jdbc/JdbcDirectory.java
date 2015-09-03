@@ -446,6 +446,7 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
     public void deleteFile(final String name) throws IOException {
         if (LuceneFileNames.isStaticFile(name)) {
             // TODO is necessary??
+            logger.warn("JdbcDirectory.deleteFile({}), is static file", name);
             forceDeleteFile(name);
         } else {
             getFileEntryHandler(name).deleteFile(name);
@@ -461,7 +462,7 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
     public IndexOutput createOutput(final String name, final IOContext context) throws IOException {
         if (LuceneFileNames.isStaticFile(name)) {
             // TODO is necessary??
-            logger.debug("JdbcDirectory.createOutput().isStaticFile()");
+            logger.warn("JdbcDirectory.createOutput({}), is static file", name);
             forceDeleteFile(name);
         }
         return getFileEntryHandler(name).createOutput(name);
@@ -475,7 +476,7 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
     @Override
     public void sync(final Collection<String> names) throws IOException {
         // TODO Auto-generated method stub
-        logger.debug("JdbcDirectory.sync()");
+        logger.warn("JdbcDirectory.sync()");
     }
 
     @Override
