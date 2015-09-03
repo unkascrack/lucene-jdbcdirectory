@@ -22,14 +22,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.Lock;
@@ -42,6 +43,7 @@ import com.github.lucene.store.jdbc.handler.FileEntryHandler;
 import com.github.lucene.store.jdbc.lock.JdbcLock;
 import com.github.lucene.store.jdbc.support.JdbcTable;
 import com.github.lucene.store.jdbc.support.JdbcTemplate;
+import com.github.lucene.store.jdbc.support.LuceneFileNames;
 
 /**
  * A Jdbc based implementation of a Lucene <code>Directory</code> allowing the
@@ -109,7 +111,7 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
 
     private JdbcDirectorySettings settings;
 
-    private final HashMap fileEntryHandlers = new HashMap();
+    private final HashMap<String, FileEntryHandler> fileEntryHandlers = new HashMap<String, FileEntryHandler>();
 
     private JdbcTemplate jdbcTemplate;
 
@@ -196,18 +198,17 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
 
     private void initialize(final DataSource dataSource, final JdbcTable table) {
         this.dataSource = dataSource;
-        jdbcTemplate = new JdbcTemplate(dataSource, table.getSettings());
+        jdbcTemplate = new JdbcTemplate(dataSource);
         dialect = table.getDialect();
         this.table = table;
         settings = table.getSettings();
         dialect.processSettings(settings);
-        final Map fileEntrySettings = settings.getFileEntrySettings();
+        final Map<String, JdbcFileEntrySettings> fileEntrySettings = settings.getFileEntrySettings();
         // go over all the file entry settings and configure them
-        for (final Iterator it = fileEntrySettings.keySet().iterator(); it.hasNext();) {
-            final String name = (String) it.next();
-            final JdbcFileEntrySettings feSettings = (JdbcFileEntrySettings) fileEntrySettings.get(name);
+        for (final String name : fileEntrySettings.keySet()) {
+            final JdbcFileEntrySettings feSettings = fileEntrySettings.get(name);
             try {
-                final Class fileEntryHandlerClass = feSettings
+                final Class<?> fileEntryHandlerClass = feSettings
                         .getSettingAsClass(JdbcFileEntrySettings.FILE_ENTRY_HANDLER_TYPE, null);
                 final FileEntryHandler fileEntryHandler = (FileEntryHandler) fileEntryHandlerClass.newInstance();
                 fileEntryHandler.configure(this);
@@ -363,7 +364,7 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
 
             @Override
             public Object execute(final ResultSet rs) throws Exception {
-                final ArrayList names = new ArrayList();
+                final ArrayList<String> names = new ArrayList<String>();
                 while (rs.next()) {
                     names.add(rs.getString(1));
                 }
@@ -403,22 +404,21 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
         });
     }
 
-    public List deleteFiles(final List names) throws IOException {
-        final HashMap tempMap = new HashMap();
-        for (final Iterator it = names.iterator(); it.hasNext();) {
-            final String name = (String) it.next();
+    @Override
+    public List<String> deleteFiles(final List<String> names) throws IOException {
+        final HashMap<FileEntryHandler, List<String>> tempMap = new HashMap<FileEntryHandler, List<String>>();
+        for (final String name : names) {
             final FileEntryHandler fileEntryHandler = getFileEntryHandler(name);
-            ArrayList tempNames = (ArrayList) tempMap.get(fileEntryHandler);
+            List<String> tempNames = tempMap.get(fileEntryHandler);
             if (tempNames == null) {
-                tempNames = new ArrayList(names.size());
+                tempNames = new ArrayList<String>(names.size());
                 tempMap.put(fileEntryHandler, tempNames);
             }
             tempNames.add(name);
         }
-        final ArrayList notDeleted = new ArrayList(names.size() / 2);
-        for (final Iterator it = tempMap.keySet().iterator(); it.hasNext();) {
-            final FileEntryHandler fileEntryHandler = (FileEntryHandler) it.next();
-            List tempNames = (ArrayList) tempMap.get(fileEntryHandler);
+        final List<String> notDeleted = new ArrayList<String>(names.size() / 2);
+        for (final FileEntryHandler fileEntryHandler : tempMap.keySet()) {
+            List<String> tempNames = tempMap.get(fileEntryHandler);
             tempNames = fileEntryHandler.deleteFiles(tempNames);
             if (tempNames != null) {
                 notDeleted.addAll(tempNames);
@@ -465,8 +465,7 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
     @Override
     public void close() throws IOException {
         IOException last = null;
-        for (final Iterator it = fileEntryHandlers.values().iterator(); it.hasNext();) {
-            final FileEntryHandler fileEntryHandler = (FileEntryHandler) it.next();
+        for (final FileEntryHandler fileEntryHandler : fileEntryHandlers.values()) {
             try {
                 fileEntryHandler.close();
             } catch (final IOException e) {
@@ -479,15 +478,15 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
     }
 
     protected FileEntryHandler getFileEntryHandler(final String name) {
-        FileEntryHandler handler = (FileEntryHandler) fileEntryHandlers.get(name.substring(name.length() - 3));
+        FileEntryHandler handler = fileEntryHandlers.get(name.substring(name.length() - 3));
         if (handler != null) {
             return handler;
         }
-        handler = (FileEntryHandler) fileEntryHandlers.get(name);
+        handler = fileEntryHandlers.get(name);
         if (handler != null) {
             return handler;
         }
-        return (FileEntryHandler) fileEntryHandlers.get(JdbcDirectorySettings.DEFAULT_FILE_ENTRY);
+        return fileEntryHandlers.get(JdbcDirectorySettings.DEFAULT_FILE_ENTRY);
 
     }
 
@@ -517,5 +516,35 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
 
     public DataSource getDataSource() {
         return dataSource;
+    }
+
+    @Override
+    public String[] listAll() throws IOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public IndexOutput createOutput(final String name, final IOContext context) throws IOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void sync(final Collection<String> names) throws IOException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public IndexInput openInput(final String name, final IOContext context) throws IOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Lock obtainLock(final String name) throws IOException {
+        // TODO Auto-generated method stub
+        return null;
     }
 }
