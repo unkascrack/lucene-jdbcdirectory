@@ -28,7 +28,7 @@ import com.github.lucene.store.jdbc.index.RAMJdbcIndexOutput;
 public class FetchPerTransactionInputRAMOutputITest extends AbstractIndexInputOutputITest {
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         if (!jdbcDirectory.getDialect().supportTransactionalScopedBlobs()) {
             disable = true;

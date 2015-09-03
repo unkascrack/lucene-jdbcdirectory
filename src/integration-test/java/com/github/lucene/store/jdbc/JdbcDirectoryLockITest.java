@@ -20,9 +20,9 @@ import java.sql.Connection;
 
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Lock;
+import org.junit.Assert;
+import org.junit.Test;
 
-import com.github.lucene.store.jdbc.JdbcDirectory;
-import com.github.lucene.store.jdbc.JdbcDirectorySettings;
 import com.github.lucene.store.jdbc.datasource.DataSourceUtils;
 import com.github.lucene.store.jdbc.support.JdbcTable;
 
@@ -33,6 +33,7 @@ public class JdbcDirectoryLockITest extends AbstractJdbcDirectoryITest {
 
     private final boolean DISABLE = true;
 
+    @Test
     public void testLocks() throws Exception {
         if (DISABLE) {
             return;
@@ -54,16 +55,16 @@ public class JdbcDirectoryLockITest extends AbstractJdbcDirectoryITest {
             final Lock lock1 = dir1.makeLock(IndexWriter.WRITE_LOCK_NAME);
 
             boolean obtained = lock1.obtain();
-            assertTrue(obtained);
+            Assert.assertTrue(obtained);
 
             final Connection con2 = DataSourceUtils.getConnection(dataSource);
             final Lock lock2 = dir2.makeLock(IndexWriter.WRITE_LOCK_NAME);
 
             obtained = lock2.obtain();
-            assertFalse(obtained);
+            Assert.assertFalse(obtained);
 
             obtained = lock2.obtain();
-            assertFalse(obtained);
+            Assert.assertFalse(obtained);
 
             lock1.release();
 
@@ -71,7 +72,7 @@ public class JdbcDirectoryLockITest extends AbstractJdbcDirectoryITest {
             DataSourceUtils.releaseConnection(con1);
 
             obtained = lock2.obtain();
-            assertTrue(obtained);
+            Assert.assertTrue(obtained);
 
             DataSourceUtils.commitConnectionIfPossible(con2);
             DataSourceUtils.releaseConnection(con2);

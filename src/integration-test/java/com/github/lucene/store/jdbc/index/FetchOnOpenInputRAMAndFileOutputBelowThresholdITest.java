@@ -28,7 +28,7 @@ import com.github.lucene.store.jdbc.index.RAMAndFileJdbcIndexOutput;
 public class FetchOnOpenInputRAMAndFileOutputBelowThresholdITest extends AbstractIndexInputOutputITest {
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         jdbcDirectory.getSettings().getDefaultFileEntrySettings()
                 .setLongSetting(RAMAndFileJdbcIndexOutput.INDEX_OUTPUT_THRESHOLD_SETTING, 100);

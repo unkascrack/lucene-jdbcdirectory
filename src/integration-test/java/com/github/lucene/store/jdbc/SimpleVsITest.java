@@ -22,16 +22,22 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import com.github.lucene.store.jdbc.JdbcDirectory;
+import com.github.lucene.store.DirectoryTemplate;
 import com.github.lucene.store.jdbc.datasource.DataSourceUtils;
 
 /**
@@ -44,12 +50,11 @@ public class SimpleVsITest extends AbstractJdbcDirectoryITest {
     private Directory fsDir;
     private Directory ramDir;
     private Directory jdbcDir;
-    private final Collection docs = loadDocuments(3000, 5);
+    private final Collection<String> docs = loadDocuments(3000, 5);
     private final boolean useCompoundFile = false;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         ramDir = new RAMDirectory();
 
         final Path path = FileSystems.getDefault().getPath("target/index");
@@ -63,6 +68,7 @@ public class SimpleVsITest extends AbstractJdbcDirectoryITest {
         DataSourceUtils.releaseConnection(con);
     }
 
+    @Test
     public void testTiming() throws IOException {
         if (DISABLE) {
             return;
@@ -71,7 +77,7 @@ public class SimpleVsITest extends AbstractJdbcDirectoryITest {
         final long fsTiming = timeIndexWriter(fsDir);
         final long jdbcTiming = timeIndexWriter(jdbcDir);
 
-        assertTrue(fsTiming > ramTiming);
+        Assert.assertTrue(fsTiming > ramTiming);
 
         System.out.println("RAMDirectory Time: " + ramTiming + " ms");
         System.out.println("FSDirectory Time : " + fsTiming + " ms");
@@ -87,10 +93,15 @@ public class SimpleVsITest extends AbstractJdbcDirectoryITest {
 
     private void addDocuments(final Directory dir) throws IOException {
         final DirectoryTemplate template = new DirectoryTemplate(dir);
+
+        final IndexWriterConfig config = new IndexWriterConfig(new SimpleAnalyzer());
+        config.setOpenMode(OpenMode.CREATE);
+        config.setUseCompoundFile(useCompoundFile);
+
         template.execute(new DirectoryTemplate.DirectoryCallbackWithoutResult() {
-            protected void doInDirectoryWithoutResult(final Directory dir) throws IOException {
-                final IndexWriter writer = new IndexWriter(dir, new SimpleAnalyzer(), true);
-                writer.setUseCompoundFile(useCompoundFile);
+            @Override
+            public void doInDirectoryWithoutResult(final Directory dir) throws IOException {
+                final IndexWriter writer = new IndexWriter(dir, config);
 
                 /**
                  * // change to adjust performance of indexing with FSDirectory
@@ -99,23 +110,35 @@ public class SimpleVsITest extends AbstractJdbcDirectoryITest {
                  * writer.minMergeDocs;
                  */
 
-                for (final Iterator iter = docs.iterator(); iter.hasNext();) {
+                for (final Object element : docs) {
                     final Document doc = new Document();
-                    final String word = (String) iter.next();
-                    doc.add(new Field("keyword", word, Field.Store.YES, Field.Index.UN_TOKENIZED));
-                    doc.add(new Field("unindexed", word, Field.Store.YES, Field.Index.NO));
-                    doc.add(new Field("unstored", word, Field.Store.NO, Field.Index.TOKENIZED));
-                    doc.add(new Field("text", word, Field.Store.YES, Field.Index.TOKENIZED));
+                    final String word = (String) element;
+                    // FIXME: review
+                    // doc.add(new Field("keyword", word, Field.Store.YES,
+                    // Field.Index.UN_TOKENIZED));
+                    // doc.add(new Field("unindexed", word, Field.Store.YES,
+                    // Field.Index.NO));
+                    // doc.add(new Field("unstored", word, Field.Store.NO,
+                    // Field.Index.TOKENIZED));
+                    // doc.add(new Field("text", word, Field.Store.YES,
+                    // Field.Index.TOKENIZED));
+                    doc.add(new StringField("keyword", word, Field.Store.YES));
+                    doc.add(new StringField("unindexed", word, Field.Store.YES));
+                    doc.add(new StringField("unstored", word, Field.Store.YES));
+                    doc.add(new StringField("text", word, Field.Store.YES));
+
                     writer.addDocument(doc);
                 }
-                writer.optimize();
+
+                // FIXME: review
+                // writer.optimize();
                 writer.close();
             }
         });
     }
 
-    private Collection loadDocuments(final int numDocs, final int wordsPerDoc) {
-        final Collection docs = new ArrayList(numDocs);
+    private Collection<String> loadDocuments(final int numDocs, final int wordsPerDoc) {
+        final Collection<String> docs = new ArrayList<String>(numDocs);
         for (int i = 0; i < numDocs; i++) {
             final StringBuffer doc = new StringBuffer(wordsPerDoc);
             for (int j = 0; j < wordsPerDoc; j++) {

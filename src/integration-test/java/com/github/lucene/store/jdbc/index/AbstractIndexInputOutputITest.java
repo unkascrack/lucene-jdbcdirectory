@@ -21,14 +21,15 @@ import java.sql.Connection;
 
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 
 import com.github.lucene.store.jdbc.AbstractJdbcDirectoryITest;
 import com.github.lucene.store.jdbc.JdbcDirectory;
 import com.github.lucene.store.jdbc.JdbcDirectorySettings;
 import com.github.lucene.store.jdbc.JdbcFileEntrySettings;
 import com.github.lucene.store.jdbc.datasource.DataSourceUtils;
-import com.github.lucene.store.jdbc.index.JdbcBufferedIndexInput;
-import com.github.lucene.store.jdbc.index.JdbcBufferedIndexOutput;
 import com.github.lucene.store.jdbc.support.JdbcTable;
 
 /**
@@ -40,9 +41,8 @@ public abstract class AbstractIndexInputOutputITest extends AbstractJdbcDirector
 
     protected boolean disable;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         final JdbcDirectorySettings settings = new JdbcDirectorySettings();
         settings.getDefaultFileEntrySettings().setClassSetting(JdbcFileEntrySettings.INDEX_INPUT_TYPE_SETTING,
                 indexInputClass());
@@ -52,10 +52,9 @@ public abstract class AbstractIndexInputOutputITest extends AbstractJdbcDirector
         jdbcDirectory = new JdbcDirectory(dataSource, new JdbcTable(settings, createDialect(), "TEST"));
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         jdbcDirectory.close();
-        super.tearDown();
     }
 
     protected abstract Class<? extends IndexInput> indexInputClass();
@@ -102,7 +101,7 @@ public abstract class AbstractIndexInputOutputITest extends AbstractJdbcDirector
         innertTestSizeWithinTransaction(50);
     }
 
-    protected void innerTestSize(final int bufferSize) throws IOException {
+    public void innerTestSize(final int bufferSize) throws IOException {
         if (disable) {
             return;
         }
@@ -127,7 +126,7 @@ public abstract class AbstractIndexInputOutputITest extends AbstractJdbcDirector
         DataSourceUtils.releaseConnection(con);
     }
 
-    protected void innertTestSizeWithinTransaction(final int bufferSize) throws IOException {
+    public void innertTestSizeWithinTransaction(final int bufferSize) throws IOException {
         if (disable) {
             return;
         }
@@ -155,9 +154,11 @@ public abstract class AbstractIndexInputOutputITest extends AbstractJdbcDirector
         indexOutput.writeBytes(test, 8);
         indexOutput.writeBytes(test, 5);
 
-        indexOutput.seek(28);
+        // FIXME: review
+        // indexOutput.seek(28);
         indexOutput.writeByte((byte) 8);
-        indexOutput.seek(30);
+        // FIXME: review
+        // indexOutput.seek(30);
         indexOutput.writeBytes(new byte[] { 1, 2 }, 2);
 
         indexOutput.close();
@@ -165,25 +166,25 @@ public abstract class AbstractIndexInputOutputITest extends AbstractJdbcDirector
 
     private void verifyData() throws IOException {
         final byte[] test = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
-        assertTrue(jdbcDirectory.fileExists("value1"));
-        assertEquals(33, jdbcDirectory.fileLength("value1"));
+        Assert.assertTrue(jdbcDirectory.fileExists("value1"));
+        Assert.assertEquals(33, jdbcDirectory.fileLength("value1"));
 
         final IndexInput indexInput = jdbcDirectory.openInput("value1");
-        assertEquals(-1, indexInput.readInt());
-        assertEquals(10, indexInput.readLong());
-        assertEquals(0, indexInput.readInt());
-        assertEquals(0, indexInput.readInt());
+        Assert.assertEquals(-1, indexInput.readInt());
+        Assert.assertEquals(10, indexInput.readLong());
+        Assert.assertEquals(0, indexInput.readInt());
+        Assert.assertEquals(0, indexInput.readInt());
         indexInput.readBytes(test, 0, 8);
-        assertEquals((byte) 1, test[0]);
-        assertEquals((byte) 8, test[7]);
+        Assert.assertEquals((byte) 1, test[0]);
+        Assert.assertEquals((byte) 8, test[7]);
         indexInput.readBytes(test, 0, 5);
-        assertEquals((byte) 8, test[0]);
-        assertEquals((byte) 5, test[4]);
+        Assert.assertEquals((byte) 8, test[0]);
+        Assert.assertEquals((byte) 5, test[4]);
 
         indexInput.seek(28);
-        assertEquals((byte) 8, indexInput.readByte());
+        Assert.assertEquals((byte) 8, indexInput.readByte());
         indexInput.seek(30);
-        assertEquals((byte) 1, indexInput.readByte());
+        Assert.assertEquals((byte) 1, indexInput.readByte());
 
         indexInput.close();
     }

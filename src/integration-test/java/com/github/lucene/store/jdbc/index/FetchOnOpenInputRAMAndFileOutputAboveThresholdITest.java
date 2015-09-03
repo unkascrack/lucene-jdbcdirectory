@@ -19,16 +19,13 @@ package com.github.lucene.store.jdbc.index;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 
-import com.github.lucene.store.jdbc.index.FetchOnOpenJdbcIndexInput;
-import com.github.lucene.store.jdbc.index.RAMAndFileJdbcIndexOutput;
-
 /**
  * @author kimchy
  */
 public class FetchOnOpenInputRAMAndFileOutputAboveThresholdITest extends AbstractIndexInputOutputITest {
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         jdbcDirectory.getSettings().getDefaultFileEntrySettings()
                 .setLongSetting(RAMAndFileJdbcIndexOutput.INDEX_OUTPUT_THRESHOLD_SETTING, 15);

@@ -22,10 +22,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import org.apache.lucene.store.IndexOutput;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import com.github.lucene.store.jdbc.JdbcDirectory;
-import com.github.lucene.store.jdbc.JdbcDirectorySettings;
-import com.github.lucene.store.jdbc.JdbcFileEntrySettings;
 import com.github.lucene.store.jdbc.datasource.DataSourceUtils;
 import com.github.lucene.store.jdbc.handler.ActualDeleteFileEntryHandler;
 import com.github.lucene.store.jdbc.support.JdbcTable;
@@ -38,22 +39,20 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
 
     private JdbcDirectory jdbcDirectory;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         final JdbcDirectorySettings settings = new JdbcDirectorySettings();
         settings.getDefaultFileEntrySettings().setClassSetting(JdbcFileEntrySettings.FILE_ENTRY_HANDLER_TYPE,
                 ActualDeleteFileEntryHandler.class);
-
         jdbcDirectory = new JdbcDirectory(dataSource, new JdbcTable(settings, createDialect(), "TEST"));
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         jdbcDirectory.close();
-        super.tearDown();
     }
 
+    @Test
     public void testCreateDelteExists() throws IOException {
         Connection con = DataSourceUtils.getConnection(dataSource);
         jdbcDirectory.create();
@@ -62,7 +61,7 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
 
         if (jdbcDirectory.getDialect().supportsTableExists()) {
             con = DataSourceUtils.getConnection(dataSource);
-            assertTrue(jdbcDirectory.tableExists());
+            Assert.assertTrue(jdbcDirectory.tableExists());
             DataSourceUtils.commitConnectionIfPossible(con);
             DataSourceUtils.releaseConnection(con);
         }
@@ -74,18 +73,19 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
 
         if (jdbcDirectory.getDialect().supportsTableExists()) {
             con = DataSourceUtils.getConnection(dataSource);
-            assertFalse(jdbcDirectory.tableExists());
+            Assert.assertFalse(jdbcDirectory.tableExists());
             DataSourceUtils.commitConnectionIfPossible(con);
             DataSourceUtils.releaseConnection(con);
         }
     }
 
+    @Test
     public void testCreateDelteExistsWitinTransaction() throws IOException {
         final Connection con = DataSourceUtils.getConnection(dataSource);
         jdbcDirectory.create();
 
         if (jdbcDirectory.getDialect().supportsTableExists()) {
-            assertTrue(jdbcDirectory.tableExists());
+            Assert.assertTrue(jdbcDirectory.tableExists());
         }
 
         jdbcTemplate.executeSelect("select * from test", new JdbcTemplate.ExecuteSelectCallback() {
@@ -96,7 +96,7 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
 
             @Override
             public Object execute(final ResultSet rs) throws Exception {
-                assertFalse(rs.next());
+                Assert.assertFalse(rs.next());
                 return null;
             }
         });
@@ -104,7 +104,7 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
         jdbcDirectory.delete();
 
         if (jdbcDirectory.getDialect().supportsTableExists()) {
-            assertFalse(jdbcDirectory.tableExists());
+            Assert.assertFalse(jdbcDirectory.tableExists());
         }
 
         try {
@@ -116,11 +116,11 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
 
                 @Override
                 public Object execute(final ResultSet rs) throws Exception {
-                    assertFalse(rs.next());
+                    Assert.assertFalse(rs.next());
                     return null;
                 }
             });
-            fail();
+            Assert.fail();
         } catch (final Exception e) {
 
         }
@@ -128,6 +128,7 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
         DataSourceUtils.releaseConnection(con);
     }
 
+    @Test
     public void testList() throws IOException {
         Connection con = DataSourceUtils.getConnection(dataSource);
         jdbcDirectory.create();
@@ -138,7 +139,7 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
         String[] list = jdbcDirectory.list();
         DataSourceUtils.commitConnectionIfPossible(con);
         DataSourceUtils.releaseConnection(con);
-        assertEquals(0, list.length);
+        Assert.assertEquals(0, list.length);
 
         con = DataSourceUtils.getConnection(dataSource);
         final IndexOutput indexOutput = jdbcDirectory.createOutput("test1");
@@ -155,7 +156,7 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
 
             @Override
             public Object execute(final ResultSet rs) throws Exception {
-                assertTrue(rs.next());
+                Assert.assertTrue(rs.next());
                 return null;
             }
         });
@@ -164,7 +165,7 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
         list = jdbcDirectory.list();
         DataSourceUtils.commitConnectionIfPossible(con);
         DataSourceUtils.releaseConnection(con);
-        assertEquals(1, list.length);
+        Assert.assertEquals(1, list.length);
 
         con = DataSourceUtils.getConnection(dataSource);
         jdbcDirectory.deleteFile("test1");
@@ -175,16 +176,17 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
         list = jdbcDirectory.list();
         DataSourceUtils.commitConnectionIfPossible(con);
         DataSourceUtils.releaseConnection(con);
-        assertEquals(0, list.length);
+        Assert.assertEquals(0, list.length);
     }
 
+    @Test
     public void testListWithinTransaction() throws IOException {
         final Connection con = DataSourceUtils.getConnection(dataSource);
 
         jdbcDirectory.create();
 
         String[] list = jdbcDirectory.list();
-        assertEquals(0, list.length);
+        Assert.assertEquals(0, list.length);
 
         final IndexOutput indexOutput = jdbcDirectory.createOutput("test1");
         indexOutput.writeString("TEST STRING");
@@ -198,22 +200,23 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
 
             @Override
             public Object execute(final ResultSet rs) throws Exception {
-                assertTrue(rs.next());
+                Assert.assertTrue(rs.next());
                 return null;
             }
         });
 
         list = jdbcDirectory.list();
-        assertEquals(1, list.length);
+        Assert.assertEquals(1, list.length);
 
         jdbcDirectory.deleteFile("test1");
         list = jdbcDirectory.list();
-        assertEquals(0, list.length);
+        Assert.assertEquals(0, list.length);
 
         DataSourceUtils.rollbackConnectionIfPossible(con);
         DataSourceUtils.releaseConnection(con);
     }
 
+    @Test
     public void testDeleteContent() throws IOException {
         Connection con = DataSourceUtils.getConnection(dataSource);
         jdbcDirectory.create();
@@ -224,7 +227,7 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
         String[] list = jdbcDirectory.list();
         DataSourceUtils.commitConnectionIfPossible(con);
         DataSourceUtils.releaseConnection(con);
-        assertEquals(0, list.length);
+        Assert.assertEquals(0, list.length);
 
         con = DataSourceUtils.getConnection(dataSource);
         final IndexOutput indexOutput = jdbcDirectory.createOutput("test1");
@@ -237,7 +240,7 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
         list = jdbcDirectory.list();
         DataSourceUtils.commitConnectionIfPossible(con);
         DataSourceUtils.releaseConnection(con);
-        assertEquals(1, list.length);
+        Assert.assertEquals(1, list.length);
 
         con = DataSourceUtils.getConnection(dataSource);
         jdbcDirectory.deleteContent();
@@ -248,6 +251,6 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
         list = jdbcDirectory.list();
         DataSourceUtils.commitConnectionIfPossible(con);
         DataSourceUtils.releaseConnection(con);
-        assertEquals(0, list.length);
+        Assert.assertEquals(0, list.length);
     }
 }
