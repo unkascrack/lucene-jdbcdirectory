@@ -27,7 +27,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.rule.RunInThread;
 
 import com.github.lucene.store.jdbc.datasource.DataSourceUtils;
 import com.github.lucene.store.jdbc.handler.ActualDeleteFileEntryHandler;
@@ -55,7 +54,6 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
     }
 
     @Test
-    @RunInThread
     public void testCreateDelteExists() throws IOException {
         jdbcDirectory.create();
 
@@ -71,7 +69,6 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
     }
 
     @Test
-    @RunInThread
     public void testCreateDelteExistsWitinTransaction() throws IOException {
         jdbcDirectory.create();
 
@@ -118,7 +115,6 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
     }
 
     @Test
-    @RunInThread
     public void testList() throws IOException {
         Connection con = DataSourceUtils.getConnection(dataSource);
         jdbcDirectory.create();
@@ -170,7 +166,6 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
     }
 
     @Test
-    @RunInThread
     public void testListWithinTransaction() throws IOException {
         final Connection con = DataSourceUtils.getConnection(dataSource);
 
@@ -208,7 +203,6 @@ public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryIT
     }
 
     @Test
-    @RunInThread
     public void testDeleteContent() throws IOException {
         Connection con = DataSourceUtils.getConnection(dataSource);
         jdbcDirectory.create();
