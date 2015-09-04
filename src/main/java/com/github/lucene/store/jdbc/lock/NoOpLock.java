@@ -40,8 +40,8 @@ public class NoOpLock extends Lock implements JdbcLock {
     }
 
     @Override
-    public boolean obtain() throws IOException {
-        return true;
+    public void obtain() throws IOException {
+        // do nothing
     }
 
     @Override

@@ -59,14 +59,10 @@ public class JdbcDirectoryLockITest extends AbstractJdbcDirectoryITest {
         try {
             final Connection con1 = DataSourceUtils.getConnection(dataSource);
             final Lock lock1 = dir1.obtainLock(IndexWriter.WRITE_LOCK_NAME);
-
             lock1.ensureValid();
 
-            final Connection con2 = DataSourceUtils.getConnection(dataSource);
-            final Lock lock2 = dir2.obtainLock(IndexWriter.WRITE_LOCK_NAME);
-
             try {
-                lock2.ensureValid();
+                dir2.obtainLock(IndexWriter.WRITE_LOCK_NAME);
                 Assert.fail("lock2 should not have valid lock");
             } catch (final IOException e) {
             }
@@ -76,28 +72,13 @@ public class JdbcDirectoryLockITest extends AbstractJdbcDirectoryITest {
             DataSourceUtils.commitConnectionIfPossible(con1);
             DataSourceUtils.releaseConnection(con1);
 
+            final Connection con2 = DataSourceUtils.getConnection(dataSource);
+            final Lock lock2 = dir2.obtainLock(IndexWriter.WRITE_LOCK_NAME);
             lock2.ensureValid();
+            lock2.close();
 
             DataSourceUtils.commitConnectionIfPossible(con2);
             DataSourceUtils.releaseConnection(con2);
-
-            // final Lock lock1 = dir1.obtainLock(IndexWriter.WRITE_LOCK_NAME);
-            // lock1.ensureValid();
-            //
-            // final Lock lock2 = dir2.obtainLock(IndexWriter.WRITE_LOCK_NAME);
-            // try {
-            // lock2.ensureValid();
-            // Assert.fail("lock2 should not have valid lock");
-            // } catch (final IOException e) {
-            // }
-            //
-            // lock1.close();
-            //
-            // try {
-            // lock2.ensureValid();
-            // } catch (final IOException e) {
-            // Assert.fail("lock2 should have valid lock");
-            // }
 
         } finally {
             dir1.delete();

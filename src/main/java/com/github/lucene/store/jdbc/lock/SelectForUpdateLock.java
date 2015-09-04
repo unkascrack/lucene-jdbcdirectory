@@ -23,6 +23,7 @@ import java.sql.Types;
 
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Lock;
+import org.apache.lucene.store.LockObtainFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,29 +82,25 @@ public class SelectForUpdateLock extends Lock implements JdbcLock {
     }
 
     @Override
-    public boolean obtain() throws IOException {
-        try {
-            return ((Boolean) jdbcDirectory.getJdbcTemplate().executeSelect(
-                    jdbcDirectory.getTable().sqlSelectNameForUpdateNoWait(), new JdbcTemplate.ExecuteSelectCallback() {
+    public void obtain() throws IOException {
+        jdbcDirectory.getJdbcTemplate().executeSelect(jdbcDirectory.getTable().sqlSelectNameForUpdateNoWait(),
+                new JdbcTemplate.ExecuteSelectCallback() {
 
-                        @Override
-                        public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
-                            ps.setFetchSize(1);
-                            ps.setString(1, name);
-                        }
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                        ps.setFetchSize(1);
+                        ps.setString(1, name);
+                    }
 
-                        @Override
-                        public Object execute(final ResultSet rs) throws Exception {
-                            if (!rs.next()) {
-                                System.err.println("Should not happen, the lock [" + name + "] should already exists");
-                                return Boolean.FALSE;
-                            }
-                            return Boolean.TRUE;
+                    @Override
+                    public Object execute(final ResultSet rs) throws Exception {
+                        if (!rs.next()) {
+                            throw new LockObtainFailedException(
+                                    "Lock instance already obtained: dir=" + jdbcDirectory + ", lockName=" + name);
                         }
-                    })).booleanValue();
-        } catch (final Exception e) {
-            return false;
-        }
+                        return null;
+                    }
+                });
     }
 
     @Override

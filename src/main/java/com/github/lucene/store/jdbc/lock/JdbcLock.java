@@ -48,8 +48,7 @@ public interface JdbcLock {
     void initializeDatabase(JdbcDirectory jdbcDirectory) throws IOException;
 
     /**
-     * @return
      * @throws java.io.IOException
      */
-    public boolean obtain() throws IOException;
+    void obtain() throws IOException;
 }

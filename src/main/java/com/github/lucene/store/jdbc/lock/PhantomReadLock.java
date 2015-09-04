@@ -20,9 +20,9 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.Types;
 
+import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Lock;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.lucene.store.LockObtainFailedException;
 
 import com.github.lucene.store.jdbc.JdbcDirectory;
 import com.github.lucene.store.jdbc.support.JdbcTemplate;
@@ -42,10 +42,7 @@ import com.github.lucene.store.jdbc.support.JdbcTemplate;
  */
 public class PhantomReadLock extends Lock implements JdbcLock {
 
-    private static final Logger logger = LoggerFactory.getLogger(PhantomReadLock.class);
-
     private JdbcDirectory jdbcDirectory;
-
     private String name;
 
     @Override
@@ -60,38 +57,34 @@ public class PhantomReadLock extends Lock implements JdbcLock {
     }
 
     @Override
-    public boolean obtain() throws IOException {
-        try {
-            if (jdbcDirectory.getDialect().useExistsBeforeInsertLock()) {
-                // there are databases where the fact that an exception was
-                // thrown invalidates the connection. So first we check if it
-                // exists, and then insert it.
-                if (jdbcDirectory.fileExists(name)) {
-                    return false;
-                }
+    public void obtain() throws IOException {
+        if (jdbcDirectory.getDialect().useExistsBeforeInsertLock()) {
+            // there are databases where the fact that an exception was
+            // thrown invalidates the connection. So first we check if it
+            // exists, and then insert it.
+            if (jdbcDirectory.fileExists(name)) {
+                throw new LockObtainFailedException(
+                        "Lock instance already obtained: dir=" + jdbcDirectory + ", lockName=" + name);
             }
-            jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlInsert(),
-                    new JdbcTemplate.PrepateStatementAwareCallback() {
-                        @Override
-                        public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
-                            ps.setFetchSize(1);
-                            ps.setString(1, name);
-                            ps.setNull(2, Types.BLOB);
-                            ps.setLong(3, 0);
-                            ps.setBoolean(4, false);
-                        }
-                    });
-        } catch (final Exception e) {
-            if (logger.isTraceEnabled()) {
-                logger.trace("Obtain Lock exception (might be valid) [" + e.getMessage() + "]");
-            }
-            return false;
         }
-        return true;
+        jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlInsert(),
+                new JdbcTemplate.PrepateStatementAwareCallback() {
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                        ps.setFetchSize(1);
+                        ps.setString(1, name);
+                        ps.setNull(2, Types.BLOB);
+                        ps.setLong(3, 0);
+                        ps.setBoolean(4, false);
+                    }
+                });
     }
 
     @Override
     public void close() throws IOException {
+        if (!jdbcDirectory.fileExists(name)) {
+            throw new AlreadyClosedException("Lock was already released: dir=" + jdbcDirectory + ", lockName=" + name);
+        }
         jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlDeleteByName(),
                 new JdbcTemplate.PrepateStatementAwareCallback() {
                     @Override
@@ -105,8 +98,9 @@ public class PhantomReadLock extends Lock implements JdbcLock {
     @Override
     public void ensureValid() throws IOException {
         if (!jdbcDirectory.fileExists(name)) {
-            // TODO should throw JdbcException??
-            logger.debug("PhantomReadLock.ensureValid() - file not exists: {}", name);
+            // TODO should throw AlreadyClosedException??
+            throw new AlreadyClosedException(
+                    "Lock instance already released: dir=" + jdbcDirectory + ", lockName=" + name);
         }
     }
 
