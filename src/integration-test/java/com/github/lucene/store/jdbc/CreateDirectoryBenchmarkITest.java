@@ -41,7 +41,7 @@ import com.github.lucene.store.jdbc.datasource.DataSourceUtils;
 /**
  * @author kimchy
  */
-public class JdbcDirectoryBenchmarkITest extends AbstractJdbcDirectoryITest {
+public class CreateDirectoryBenchmarkITest extends AbstractJdbcDirectoryITest {
 
     private Directory fsDir;
     private Directory ramDir;
