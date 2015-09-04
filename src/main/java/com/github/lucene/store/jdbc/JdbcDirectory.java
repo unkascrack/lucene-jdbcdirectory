@@ -475,8 +475,12 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
 
     @Override
     public void sync(final Collection<String> names) throws IOException {
-        // TODO Auto-generated method stub
         logger.warn("JdbcDirectory.sync()");
+        for (final String name : names) {
+            if (!fileExists(name)) {
+                throw new JdbcStoreException("Failed to sync, file " + name + " not found");
+            }
+        }
     }
 
     @Override
