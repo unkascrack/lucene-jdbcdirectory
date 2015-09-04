@@ -44,7 +44,6 @@ import com.github.lucene.store.jdbc.datasource.DriverManagerDataSource;
 import com.github.lucene.store.jdbc.datasource.TransactionAwareDataSourceProxy;
 import com.github.lucene.store.jdbc.dialect.Dialect;
 import com.github.lucene.store.jdbc.dialect.DialectResolver;
-import com.github.lucene.store.jdbc.support.JdbcTemplate;
 
 import net.sf.log4jdbc.sql.jdbcapi.DataSourceSpy;
 
@@ -57,7 +56,6 @@ public abstract class AbstractJdbcDirectoryITest {
 
     private String dialect;
     protected DataSource dataSource;
-    protected JdbcTemplate jdbcTemplate;
 
     protected Analyzer analyzer = new SimpleAnalyzer();
 
@@ -95,7 +93,6 @@ public abstract class AbstractJdbcDirectoryITest {
         // TransactionAwareDataSourceProxy(driverManagerDataSource));
         dataSource = new TransactionAwareDataSourceProxy(new DataSourceSpy(driverManagerDataSource));
         dialect = "com.github.lucene.store.jdbc.dialect.HSQLDialect";
-        jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     protected Dialect createDialect() throws Exception {
@@ -119,12 +116,11 @@ public abstract class AbstractJdbcDirectoryITest {
 
     protected void addDocuments(final Directory directory, final OpenMode openMode, final boolean useCompoundFile,
             final Collection<String> docs) throws IOException {
-        final DirectoryTemplate template = new DirectoryTemplate(directory);
-
         final IndexWriterConfig config = new IndexWriterConfig(analyzer);
         config.setOpenMode(OpenMode.CREATE);
         config.setUseCompoundFile(useCompoundFile);
 
+        final DirectoryTemplate template = new DirectoryTemplate(directory);
         template.execute(new DirectoryTemplate.DirectoryCallbackWithoutResult() {
             @Override
             public void doInDirectoryWithoutResult(final Directory dir) throws IOException {

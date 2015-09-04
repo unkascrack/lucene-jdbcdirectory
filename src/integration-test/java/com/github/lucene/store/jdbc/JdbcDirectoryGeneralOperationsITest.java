@@ -39,6 +39,7 @@ import com.github.lucene.store.jdbc.support.JdbcTemplate;
 public class JdbcDirectoryGeneralOperationsITest extends AbstractJdbcDirectoryITest {
 
     private JdbcDirectory jdbcDirectory;
+    private JdbcTemplate jdbcTemplate;
 
     @Before
     public void setUp() throws Exception {
@@ -46,6 +47,7 @@ public class JdbcDirectoryGeneralOperationsITest extends AbstractJdbcDirectoryIT
         settings.getDefaultFileEntrySettings().setClassSetting(JdbcFileEntrySettings.FILE_ENTRY_HANDLER_TYPE,
                 ActualDeleteFileEntryHandler.class);
         jdbcDirectory = new JdbcDirectory(dataSource, new JdbcTable(settings, createDialect(), "TEST"));
+        jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     @After
