@@ -17,7 +17,6 @@
 package com.github.lucene.store.jdbc.handler;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
@@ -80,18 +79,6 @@ public interface FileEntryHandler {
      * @throws java.io.IOException
      */
     void deleteFile(final String name) throws IOException;
-
-    /**
-     * Deletes a list of files. It must be verified by the caller that all files
-     * correlate to this file entry handler.
-     *
-     * @param names
-     *            The list of file names to delete
-     * @return List of files that were not deleted (or <code>null</code> if all
-     *         were deleted)
-     * @throws java.io.IOException
-     */
-    List<String> deleteFiles(List<String> names) throws IOException;
 
     /**
      * Renames the file entry from "from" to "to". The from entry is the one

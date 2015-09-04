@@ -18,7 +18,6 @@ package com.github.lucene.store.jdbc.handler;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;
-import java.util.List;
 
 import com.github.lucene.store.jdbc.support.JdbcTemplate;
 
@@ -39,19 +38,5 @@ public class ActualDeleteFileEntryHandler extends AbstractFileEntryHandler {
                 ps.setString(1, name);
             }
         });
-    }
-
-    @Override
-    public List<String> deleteFiles(final List<String> names) throws IOException {
-        jdbcTemplate.executeBatch(table.sqlDeleteByName(), new JdbcTemplate.PrepateStatementAwareCallback() {
-            @Override
-            public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
-                ps.setFetchSize(1);
-                for (final String name : names) {
-                    ps.setString(1, name);
-                }
-            }
-        });
-        return null;
     }
 }

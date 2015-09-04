@@ -24,7 +24,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
@@ -38,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.lucene.store.DirectoryTemplate;
-import com.github.lucene.store.MultiDeleteDirectory;
 import com.github.lucene.store.jdbc.dialect.Dialect;
 import com.github.lucene.store.jdbc.dialect.DialectResolver;
 import com.github.lucene.store.jdbc.handler.FileEntryHandler;
@@ -103,7 +101,7 @@ import com.github.lucene.store.jdbc.support.LuceneFileNames;
  *
  * @author kimchy
  */
-public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
+public class JdbcDirectory extends Directory {
 
     private static final Logger logger = LoggerFactory.getLogger(JdbcDirectory.class);
 
@@ -509,33 +507,6 @@ public class JdbcDirectory extends Directory implements MultiDeleteDirectory {
         if (last != null) {
             throw last;
         }
-    }
-
-    /***********************************************************************************************
-     * MULTIDELETEDIRECTORY METHOD
-     ***********************************************************************************************/
-
-    @Override
-    public List<String> deleteFiles(final List<String> names) throws IOException {
-        final HashMap<FileEntryHandler, List<String>> tempMap = new HashMap<FileEntryHandler, List<String>>();
-        for (final String name : names) {
-            final FileEntryHandler fileEntryHandler = getFileEntryHandler(name);
-            List<String> tempNames = tempMap.get(fileEntryHandler);
-            if (tempNames == null) {
-                tempNames = new ArrayList<String>(names.size());
-                tempMap.put(fileEntryHandler, tempNames);
-            }
-            tempNames.add(name);
-        }
-        final List<String> notDeleted = new ArrayList<String>(names.size() / 2);
-        for (final FileEntryHandler fileEntryHandler : tempMap.keySet()) {
-            List<String> tempNames = tempMap.get(fileEntryHandler);
-            tempNames = fileEntryHandler.deleteFiles(tempNames);
-            if (tempNames != null) {
-                notDeleted.addAll(tempNames);
-            }
-        }
-        return notDeleted;
     }
 
     /***********************************************************************************************

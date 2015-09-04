@@ -17,7 +17,6 @@
 package com.github.lucene.store.jdbc.handler;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
@@ -148,11 +147,6 @@ public class NoOpFileEntryHandler implements FileEntryHandler {
 
     @Override
     public void deleteFile(final String name) throws IOException {
-    }
-
-    @Override
-    public List<String> deleteFiles(final List<String> names) throws IOException {
-        return null;
     }
 
     @Override
