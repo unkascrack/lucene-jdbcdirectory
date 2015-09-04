@@ -63,8 +63,7 @@ public class PhantomReadLock extends Lock implements JdbcLock {
             // thrown invalidates the connection. So first we check if it
             // exists, and then insert it.
             if (jdbcDirectory.fileExists(name)) {
-                throw new LockObtainFailedException(
-                        "Lock instance already obtained: dir=" + jdbcDirectory + ", lockName=" + name);
+                throw new LockObtainFailedException("Lock instance already obtained: " + this);
             }
         }
         jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlInsert(),
@@ -83,7 +82,7 @@ public class PhantomReadLock extends Lock implements JdbcLock {
     @Override
     public void close() throws IOException {
         if (!jdbcDirectory.fileExists(name)) {
-            throw new AlreadyClosedException("Lock was already released: dir=" + jdbcDirectory + ", lockName=" + name);
+            throw new AlreadyClosedException("Lock was already released: " + this);
         }
         jdbcDirectory.getJdbcTemplate().executeUpdate(jdbcDirectory.getTable().sqlDeleteByName(),
                 new JdbcTemplate.PrepateStatementAwareCallback() {
@@ -99,8 +98,7 @@ public class PhantomReadLock extends Lock implements JdbcLock {
     public void ensureValid() throws IOException {
         if (!jdbcDirectory.fileExists(name)) {
             // TODO should throw AlreadyClosedException??
-            throw new AlreadyClosedException(
-                    "Lock instance already released: dir=" + jdbcDirectory + ", lockName=" + name);
+            throw new AlreadyClosedException("Lock instance already released: " + this);
         }
     }
 

@@ -36,7 +36,7 @@ import com.github.lucene.store.jdbc.support.JdbcTemplate;
 /**
  * @author kimchy
  */
-public class GeneralOperationsJdbcDirectoryITest extends AbstractJdbcDirectoryITest {
+public class JdbcDirectoryGeneralOperationsITest extends AbstractJdbcDirectoryITest {
 
     private JdbcDirectory jdbcDirectory;
 

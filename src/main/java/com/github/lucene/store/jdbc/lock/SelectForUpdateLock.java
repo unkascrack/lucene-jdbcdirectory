@@ -95,8 +95,7 @@ public class SelectForUpdateLock extends Lock implements JdbcLock {
                     @Override
                     public Object execute(final ResultSet rs) throws Exception {
                         if (!rs.next()) {
-                            throw new LockObtainFailedException(
-                                    "Lock instance already obtained: dir=" + jdbcDirectory + ", lockName=" + name);
+                            throw new LockObtainFailedException("Lock instance already obtained: " + this);
                         }
                         return null;
                     }

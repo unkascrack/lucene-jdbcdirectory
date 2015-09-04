@@ -18,9 +18,20 @@ package com.github.lucene.store.jdbc;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import javax.sql.DataSource;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.store.Directory;
 import org.hsqldb.Server;
 import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.server.ServerAcl.AclFormatException;
@@ -28,6 +39,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import com.github.lucene.store.DirectoryTemplate;
 import com.github.lucene.store.jdbc.datasource.DriverManagerDataSource;
 import com.github.lucene.store.jdbc.datasource.TransactionAwareDataSourceProxy;
 import com.github.lucene.store.jdbc.dialect.Dialect;
@@ -46,6 +58,8 @@ public abstract class AbstractJdbcDirectoryITest {
     private String dialect;
     protected DataSource dataSource;
     protected JdbcTemplate jdbcTemplate;
+
+    protected Analyzer analyzer = new SimpleAnalyzer();
 
     @BeforeClass
     public static void initDatabase() throws IOException, AclFormatException {
@@ -89,5 +103,55 @@ public abstract class AbstractJdbcDirectoryITest {
             return new DialectResolver().getDialect(dataSource);
         }
         return (Dialect) Class.forName(dialect).newInstance();
+    }
+
+    protected Collection<String> loadDocuments(final int numDocs, final int wordsPerDoc) {
+        final Collection<String> docs = new ArrayList<String>(numDocs);
+        for (int i = 0; i < numDocs; i++) {
+            final StringBuffer doc = new StringBuffer(wordsPerDoc);
+            for (int j = 0; j < wordsPerDoc; j++) {
+                doc.append("Bibamus ");
+            }
+            docs.add(doc.toString());
+        }
+        return docs;
+    }
+
+    protected void addDocuments(final Directory directory, final OpenMode openMode, final boolean useCompoundFile,
+            final Collection<String> docs) throws IOException {
+        final DirectoryTemplate template = new DirectoryTemplate(directory);
+
+        final IndexWriterConfig config = new IndexWriterConfig(analyzer);
+        config.setOpenMode(OpenMode.CREATE);
+        config.setUseCompoundFile(useCompoundFile);
+
+        template.execute(new DirectoryTemplate.DirectoryCallbackWithoutResult() {
+            @Override
+            public void doInDirectoryWithoutResult(final Directory dir) throws IOException {
+                final IndexWriter writer = new IndexWriter(dir, config);
+                for (final Object element : docs) {
+                    final Document doc = new Document();
+                    final String word = (String) element;
+                    // FIXME: review
+                    // doc.add(new Field("keyword", word, Field.Store.YES,
+                    // Field.Index.UN_TOKENIZED));
+                    // doc.add(new Field("unindexed", word, Field.Store.YES,
+                    // Field.Index.NO));
+                    // doc.add(new Field("unstored", word, Field.Store.NO,
+                    // Field.Index.TOKENIZED));
+                    // doc.add(new Field("text", word, Field.Store.YES,
+                    // Field.Index.TOKENIZED));
+                    doc.add(new StringField("keyword", word, Field.Store.YES));
+                    doc.add(new StringField("unindexed", word, Field.Store.YES));
+                    doc.add(new StringField("unstored", word, Field.Store.NO));
+                    doc.add(new StringField("text", word, Field.Store.YES));
+                    writer.addDocument(doc);
+                }
+
+                // FIXME: review
+                // writer.optimize();
+                writer.close();
+            }
+        });
     }
 }
