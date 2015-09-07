@@ -40,10 +40,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import com.github.lucene.store.DirectoryTemplate;
-import com.github.lucene.store.jdbc.datasource.DriverManagerDataSource;
-import com.github.lucene.store.jdbc.datasource.TransactionAwareDataSourceProxy;
 import com.github.lucene.store.jdbc.dialect.Dialect;
 import com.github.lucene.store.jdbc.dialect.DialectResolver;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import net.sf.log4jdbc.sql.jdbcapi.DataSourceSpy;
 
@@ -85,13 +85,21 @@ public abstract class AbstractJdbcDirectoryITest {
         final String driver = "org.hsqldb.jdbcDriver";
         final String username = "sa";
         final String password = "";
-        final DriverManagerDataSource driverManagerDataSource = new DriverManagerDataSource(driver, url, username,
-                password, false);
-        // dataSource = new
-        // TransactionAwareDataSourceProxy(driverManagerDataSource);
-        // dataSource = new DataSourceSpy(new
-        // TransactionAwareDataSourceProxy(driverManagerDataSource));
-        dataSource = new TransactionAwareDataSourceProxy(new DataSourceSpy(driverManagerDataSource));
+
+        final HikariConfig config = new HikariConfig();
+        config.setDriverClassName(driver);
+        config.setJdbcUrl(url);
+        config.setUsername(username);
+        config.setPassword(password);
+        config.setAutoCommit(true);
+        final HikariDataSource ds = new HikariDataSource(config);
+        dataSource = new DataSourceSpy(ds);
+
+        // final DriverManagerDataSource ds = new
+        // DriverManagerDataSource(driver, url, username,
+        // password, false);
+        // dataSource = new TransactionAwareDataSourceProxy(new
+        // DataSourceSpy(ds));
         dialect = "com.github.lucene.store.jdbc.dialect.HSQLDialect";
     }
 
