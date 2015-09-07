@@ -16,12 +16,16 @@
 
 package com.github.lucene.store.jdbc.index;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import org.apache.lucene.store.BufferedIndexInput;
+import org.apache.lucene.store.ChecksumIndexInput;
 import org.apache.lucene.store.IndexInput;
+import org.apache.lucene.store.RAMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -188,6 +192,63 @@ public class FetchOnBufferReadJdbcIndexInput extends JdbcBufferedIndexInput {
     public IndexInput slice(final String sliceDescription, final long offset, final long length) throws IOException {
         // TODO Auto-generated method stub
         logger.debug("FetchOnBufferReadJdbcIndexInput.slice()");
-        return null;
+
+        final RAMInputStream r = null;
+        final BufferedIndexInput b = null;
+        final ChecksumIndexInput c = null;
+        return new SlicedIndexInput(sliceDescription, this, offset, length);
+    }
+
+    /**
+     * Implementation of an IndexInput that reads from a portion of a file.
+     */
+    private static final class SlicedIndexInput extends BufferedIndexInput {
+        IndexInput base;
+        long fileOffset;
+        long length;
+
+        SlicedIndexInput(final String sliceDescription, final IndexInput base, final long offset, final long length) {
+            super(sliceDescription == null ? base.toString() : base.toString() + " [slice=" + sliceDescription + "]",
+                    BufferedIndexInput.BUFFER_SIZE);
+            if (offset < 0 || length < 0 || offset + length > base.length()) {
+                throw new IllegalArgumentException("slice() " + sliceDescription + " out of bounds: " + base);
+            }
+            this.base = base.clone();
+            fileOffset = offset;
+            this.length = length;
+        }
+
+        @Override
+        public SlicedIndexInput clone() {
+            final SlicedIndexInput clone = (SlicedIndexInput) super.clone();
+            clone.base = base.clone();
+            clone.fileOffset = fileOffset;
+            clone.length = length;
+            return clone;
+        }
+
+        @Override
+        protected void readInternal(final byte[] b, final int offset, final int len) throws IOException {
+            final long start = getFilePointer();
+            if (start + len > length) {
+                throw new EOFException("read past EOF: " + this);
+            }
+            base.seek(fileOffset + start);
+            base.readBytes(b, offset, len, false);
+        }
+
+        @Override
+        protected void seekInternal(final long pos) {
+        }
+
+        @Override
+        public void close() throws IOException {
+            base.close();
+        }
+
+        @Override
+        public long length() {
+            return length;
+        }
     }
 }

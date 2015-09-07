@@ -1,4 +1,4 @@
-package com.github.lucene.store.database;
+package com.github.lucene.store.doxdb;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
