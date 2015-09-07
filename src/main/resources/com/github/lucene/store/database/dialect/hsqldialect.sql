@@ -1,0 +1,1 @@
+sql.table.exists=SELECT name FROM %s 
