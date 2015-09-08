@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
+import org.apache.lucene.store.IOContext;
+import org.apache.lucene.store.IOContext.Context;
 import org.apache.lucene.store.IndexOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,25 +14,28 @@ import org.slf4j.LoggerFactory;
 class DatabaseIndexOutput extends IndexOutput {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseIndexOutput.class);
-
-    private final DatabaseDirectory directory;
+    private static final DatabaseDirectoryHandler handler = DatabaseDirectoryHandler.INSTANCE;
 
     private final String name;
+    private final DatabaseDirectory directory;
+    private final IOContext context;
+
     private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     private final Checksum digest = new CRC32();
     private long pos = 0;
 
-    DatabaseIndexOutput(final String name, final DatabaseDirectory directory) {
+    DatabaseIndexOutput(final DatabaseDirectory directory, final String name, final IOContext context) {
         super(name);
-        this.name = name;
         this.directory = directory;
+        this.name = name;
+        this.context = context;
     }
 
     @Override
     public void close() throws IOException {
         LOGGER.trace("{}.close()", this);
         final byte[] buffer = baos.toByteArray();
-        directory.getHandler().save(name, buffer, buffer.length);
+        handler.saveFile(directory, name, buffer, buffer.length, Context.FLUSH.equals(context.context));
     }
 
     @Override

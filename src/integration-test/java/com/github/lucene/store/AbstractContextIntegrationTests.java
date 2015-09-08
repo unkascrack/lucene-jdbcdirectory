@@ -25,6 +25,7 @@ public class AbstractContextIntegrationTests {
 
     private static Server server;
 
+    protected final String indexTableName = "INDEX_TABLE";
     protected DataSource dataSource;
     protected Dialect dialect;
     protected Analyzer analyzer = new SimpleAnalyzer();

@@ -7,7 +7,6 @@ sql.select.name=SELECT name FROM %s WHERE name = ?
 sql.select.size=SELECT size FROM %s WHERE name = ?
 sql.select.content=SELECT content FROM %s WHERE name = ?
 
-sql.insert=INSERT INTO %s (content, size, name) VALUES (?, ?, ?)
-sql.update=UPDATE %s SET content = ?, size = ? where name = ?
-sql.update.rename=UPDATE %s SET name = ? WHERE name = ?
+sql.insert=INSERT INTO %s (name, content, size) VALUES (?, ?, ?)
+sql.update=UPDATE %s SET name = ? WHERE name = ?
 sql.delete=DELETE FROM %s WHERE name = ?

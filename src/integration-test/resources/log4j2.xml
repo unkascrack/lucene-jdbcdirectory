@@ -10,7 +10,8 @@
 			<AppenderRef ref="Console" />
 		</Logger>
 		<logger name="log4jdbc.log4j2" level="info" additivity="false">
-			<MarkerFilter marker="LOG4JDBC_OTHER" onMatch="DENY" onMismatch="NEUTRAL" />
+			<!-- <MarkerFilter marker="LOG4JDBC_OTHER" onMatch="DENY" onMismatch="NEUTRAL" /> -->
+			<MarkerFilter marker="LOG4JDBC_AUDIT" onMatch="ACCEPT" onMismatch="DENY"/>
 			<appender-ref ref="Console" />
 		</logger>
 		<Logger name="com.zaxxer.hikari" level="WARN"/>

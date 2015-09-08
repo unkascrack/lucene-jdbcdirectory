@@ -1,9 +1,6 @@
 package com.github.lucene.store.database;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.Types;
 
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
@@ -16,6 +13,7 @@ import org.slf4j.LoggerFactory;
 public class DatabaseLockFactory extends LockFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseLockFactory.class);
+    private static final DatabaseDirectoryHandler handler = DatabaseDirectoryHandler.INSTANCE;
 
     public static final LockFactory INSTANCE = new DatabaseLockFactory();
 
@@ -27,19 +25,8 @@ public class DatabaseLockFactory extends LockFactory {
         LOGGER.info("{}.obtainLock({}, {})", this, dir, lockName);
 
         final DatabaseDirectory directory = (DatabaseDirectory) dir;
-        final Connection connection = DataSourceUtils.getConnection(directory.getDataSource());
-        final String sqlInsert = directory.getDialect().sqlInsert(directory.getIndexTableName());
         try {
-            JdbcTemplate.executeUpdate(connection, sqlInsert, true, new JdbcTemplate.PrepateStatementAwareCallback() {
-
-                @Override
-                public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
-                    ps.setFetchSize(1);
-                    ps.setNull(1, Types.BLOB);
-                    ps.setInt(2, 0);
-                    ps.setString(3, lockName);
-                }
-            });
+            handler.saveFile(directory, lockName, null, 0, true);
             return new DatabaseLock(directory, lockName);
         } catch (final DatabaseStoreException e) {
             throw new LockObtainFailedException("Lock instance already obtained: " + directory);
@@ -68,7 +55,7 @@ public class DatabaseLockFactory extends LockFactory {
             if (closed) {
                 throw new AlreadyClosedException("Lock instance already released: " + this);
             }
-            if (!directory.getHandler().existsFile(name)) {
+            if (!handler.existsFile(directory, name)) {
                 throw new AlreadyClosedException("Lock instance already released: " + this);
             }
         }
@@ -77,17 +64,7 @@ public class DatabaseLockFactory extends LockFactory {
         public void close() throws IOException {
             LOGGER.debug("{}.close()", this);
             if (!closed) {
-                final Connection connection = DataSourceUtils.getConnection(directory.getDataSource());
-                final String sqlDelete = directory.getDialect().sqlDeleteByName(directory.getIndexTableName());
-                JdbcTemplate.executeUpdate(connection, sqlDelete, true,
-                        new JdbcTemplate.PrepateStatementAwareCallback() {
-
-                            @Override
-                            public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
-                                ps.setFetchSize(1);
-                                ps.setString(1, name);
-                            }
-                        });
+                handler.deleteFile(directory, name, true);
                 closed = true;
             }
         }

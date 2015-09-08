@@ -21,6 +21,7 @@ import java.nio.file.FileSystems;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StoredField;
@@ -47,14 +48,14 @@ public class DatabaseDirectoryBenchmarkITest extends AbstractContextIntegrationT
     private Directory databaseDirectory;
 
     private final Collection<String> docs = loadDocuments(3000, 5);
-    private final OpenMode openMode = OpenMode.CREATE;
+    private final OpenMode openMode = OpenMode.CREATE_OR_APPEND;
     private final boolean useCompoundFile = false;
 
     @Before
     public void setUp() throws Exception {
         ramDirectory = new RAMDirectory();
         fsDirectory = FSDirectory.open(FileSystems.getDefault().getPath("target/index"));
-        databaseDirectory = new DatabaseDirectory(dataSource, dialect, "TEST");
+        databaseDirectory = new DatabaseDirectory(dataSource, dialect, indexTableName);
     }
 
     @Test
@@ -71,6 +72,8 @@ public class DatabaseDirectoryBenchmarkITest extends AbstractContextIntegrationT
     private long timeIndexWriter(final Directory dir) throws IOException {
         final long start = System.currentTimeMillis();
         addDocuments(dir, openMode, useCompoundFile, docs);
+        addDocuments(dir, openMode, useCompoundFile, docs);
+        optimize(dir, openMode, useCompoundFile);
         final long stop = System.currentTimeMillis();
         return stop - start;
     }
@@ -89,10 +92,7 @@ public class DatabaseDirectoryBenchmarkITest extends AbstractContextIntegrationT
 
     protected void addDocuments(final Directory directory, final OpenMode openMode, final boolean useCompoundFile,
             final Collection<String> docs) throws IOException {
-        final IndexWriterConfig config = new IndexWriterConfig(analyzer);
-        config.setOpenMode(OpenMode.CREATE);
-        config.setUseCompoundFile(useCompoundFile);
-
+        final IndexWriterConfig config = getIndexWriterConfig(analyzer, openMode, useCompoundFile);
         final IndexWriter writer = new IndexWriter(directory, config);
         for (final Object element : docs) {
             final Document doc = new Document();
@@ -104,33 +104,22 @@ public class DatabaseDirectoryBenchmarkITest extends AbstractContextIntegrationT
             doc.add(new TextField("index_unstore_analyzed", word, Field.Store.NO));
             writer.addDocument(doc);
         }
+        writer.close();
+    }
+
+    protected void optimize(final Directory directory, final OpenMode openMode, final boolean useCompoundFile)
+            throws IOException {
+        final IndexWriterConfig config = getIndexWriterConfig(analyzer, openMode, useCompoundFile);
+        final IndexWriter writer = new IndexWriter(directory, config);
         writer.forceMerge(1);
         writer.close();
+    }
 
-        // final DirectoryTemplate template = new DirectoryTemplate(directory);
-        // template.execute(new
-        // DirectoryTemplate.DirectoryCallbackWithoutResult() {
-        // @Override
-        // public void doInDirectoryWithoutResult(final Directory dir) throws
-        // IOException {
-        // final IndexWriter writer = new IndexWriter(dir, config);
-        // for (final Object element : docs) {
-        // final Document doc = new Document();
-        // final String word = (String) element;
-        // doc.add(new StringField("index_store_unanalyzed", word,
-        // Field.Store.YES));
-        // doc.add(new StoredField("unindexed_store_unanalyzed", word));
-        // doc.add(new StringField("index_unstore_unanalyzed", word,
-        // Field.Store.NO));
-        // doc.add(new TextField("index_store_analyzed", word,
-        // Field.Store.YES));
-        // doc.add(new TextField("index_unstore_analyzed", word,
-        // Field.Store.NO));
-        // writer.addDocument(doc);
-        // }
-        // writer.forceMerge(1);
-        // writer.close();
-        // }
-        // });
+    protected IndexWriterConfig getIndexWriterConfig(final Analyzer analyzer, final OpenMode openMode,
+            final boolean useCompoundFile) {
+        final IndexWriterConfig config = new IndexWriterConfig(analyzer);
+        config.setOpenMode(openMode);
+        config.setUseCompoundFile(useCompoundFile);
+        return config;
     }
 }

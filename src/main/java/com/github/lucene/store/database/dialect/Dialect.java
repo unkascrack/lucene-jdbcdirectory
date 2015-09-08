@@ -15,8 +15,7 @@ public abstract class Dialect {
     protected static final String PROPERTY_SQL_SELECT_SIZE = "sql.select.size";
     protected static final String PROPERTY_SQL_SELECT_CONTENT = "sql.select.content";
     protected static final String PROPERTY_SQL_INSERT = "sql.insert";
-    protected static final String PROPERTY_SQL_UPDATE = "sql.insert";
-    protected static final String PROPERTY_SQL_UPDATE_RENAME = "sql.update.rename";
+    protected static final String PROPERTY_SQL_UPDATE = "sql.update";
     protected static final String PROPERTY_SQL_DELETE = "sql.delete";
 
     protected final Properties properties;
@@ -108,14 +107,6 @@ public abstract class Dialect {
      */
     public final String sqlUpdate(final String tableName) {
         return String.format(properties.getProperty(PROPERTY_SQL_UPDATE), tableName);
-    }
-
-    /**
-     * @param tableName
-     * @return
-     */
-    public final String sqlUpdateRename(final String tableName) {
-        return String.format(properties.getProperty(PROPERTY_SQL_UPDATE_RENAME), tableName);
     }
 
     /**

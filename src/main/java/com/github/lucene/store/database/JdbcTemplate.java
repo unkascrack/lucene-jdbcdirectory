@@ -80,10 +80,11 @@ class JdbcTemplate {
      * @param callback
      * @throws DatabaseStoreException
      */
-    static void executeUpdate(final Connection connection, final String sql,
-            final PrepateStatementAwareCallback callback) throws DatabaseStoreException {
-        executeUpdate(connection, sql, false, callback);
-    }
+    // static void executeUpdate(final Connection connection, final String sql,
+    // final PrepateStatementAwareCallback callback) throws
+    // DatabaseStoreException {
+    // executeUpdate(connection, sql, false, callback);
+    // }
 
     /**
      * A template method to execute a simple sql update. The jdbc

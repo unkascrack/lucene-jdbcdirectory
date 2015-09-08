@@ -23,7 +23,7 @@ public class DatabaseLockFactoryITest extends AbstractContextIntegrationTests {
 
     @Before
     public void initDirectory() throws DatabaseStoreException, IOException {
-        directory = new DatabaseDirectory(dataSource, dialect, "TEST");
+        directory = new DatabaseDirectory(dataSource, dialect, indexTableName);
     }
 
     @After
