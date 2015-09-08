@@ -23,6 +23,8 @@ import java.util.Collection;
 
 import javax.sql.DataSource;
 
+import net.sf.log4jdbc.sql.jdbcapi.DataSourceSpy;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
@@ -40,12 +42,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import com.github.lucene.store.DirectoryTemplate;
+import com.github.lucene.store.jdbc.datasource.TransactionAwareDataSourceProxy;
 import com.github.lucene.store.jdbc.dialect.Dialect;
 import com.github.lucene.store.jdbc.dialect.DialectResolver;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-
-import net.sf.log4jdbc.sql.jdbcapi.DataSourceSpy;
 
 /**
  * @author kimchy
@@ -93,7 +94,7 @@ public abstract class AbstractJdbcDirectoryITest {
         config.setPassword(password);
         config.setAutoCommit(true);
         final HikariDataSource ds = new HikariDataSource(config);
-        dataSource = new DataSourceSpy(ds);
+        dataSource = new TransactionAwareDataSourceProxy(new DataSourceSpy(ds));
 
         // final DriverManagerDataSource ds = new
         // DriverManagerDataSource(driver, url, username,
