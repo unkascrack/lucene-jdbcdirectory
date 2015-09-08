@@ -25,7 +25,7 @@ public class DatabaseDirectory extends Directory {
     private final Dialect dialect;
     private final LockFactory lockFactory;
 
-    private final DatabaseLuceneHandler handler;
+    private final DatabaseDirectoryHandler handler;
 
     public DatabaseDirectory(final DataSource dataSource, final Dialect dialect, final String indexTableName)
             throws DatabaseStoreException {
@@ -39,11 +39,11 @@ public class DatabaseDirectory extends Directory {
         this.indexTableName = indexTableName;
         this.lockFactory = lockFactory;
 
-        handler = new DatabaseLuceneHandler(this);
+        handler = new DatabaseDirectoryHandler(this);
 
         // create directory, if it doesn't exist
-        if (dialect.supportsTableExists() && !handler.isIndexTableExists()) {
-            LOGGER.debug(this + ": creating lucene index table");
+        if (dialect.supportsTableExists() && !handler.existsIndexTable()) {
+            LOGGER.info("{}: creating lucene index table", this);
             handler.createIndexTable();
         }
     }
@@ -60,62 +60,62 @@ public class DatabaseDirectory extends Directory {
         return dialect;
     }
 
-    DatabaseLuceneHandler getHandler() {
+    DatabaseDirectoryHandler getHandler() {
         return handler;
     }
 
     @Override
     public String[] listAll() throws IOException {
-        LOGGER.debug(this + ".listAll()");
+        LOGGER.debug("{}.listAll()", this);
         return handler.listAll();
     }
 
     @Override
     public void deleteFile(final String name) throws IOException {
-        LOGGER.debug(this + ".deleteFile(" + name + ")");
+        LOGGER.debug("{}.deleteFile({})", this, name);
         handler.deleteFile(name);
     }
 
     @Override
     public long fileLength(final String name) throws IOException {
-        LOGGER.debug(this + ".fileLength(" + name + ")");
+        LOGGER.debug("{}.fileLength(name)", this, name);
         return handler.fileLength(name);
     }
 
     @Override
     public IndexOutput createOutput(final String name, final IOContext context) throws IOException {
-        LOGGER.debug(this + ".createOutput(" + name + ", " + context + ")");
+        LOGGER.debug("{}.createOutput({}, {})", this, name, context);
         return new DatabaseIndexOutput(name, this);
     }
 
     @Override
     public void sync(final Collection<String> names) throws IOException {
-        LOGGER.debug(this + ".sync(" + names + ")");
+        LOGGER.debug("{}.sync({})", this, names);
         handler.sync(names);
     }
 
     @Override
     public void renameFile(final String source, final String dest) throws IOException {
-        LOGGER.debug(this + ".renameFile(" + source + ", " + dest + ")");
+        LOGGER.debug("{}.renameFile({}, {})", this, source, dest);
         handler.renameFile(source, dest);
     }
 
     @Override
     public IndexInput openInput(final String name, final IOContext context) throws IOException {
-        LOGGER.debug(this + ".openInput(" + name + ", " + context + ")");
+        LOGGER.debug("{}.openInput({}, {})", this, name, context);
         return new DatabaseIndexInput(name, this, context);
     }
 
     @Override
     public Lock obtainLock(final String name) throws IOException {
-        LOGGER.debug(this + ".obtainLock(" + name + ")");
+        LOGGER.debug("{}.obtainLock({})", this, name);
         return lockFactory.obtainLock(this, name);
     }
 
     @Override
     public void close() throws IOException {
         // TODO do nothing??
-        LOGGER.debug(this + ".close()");
+        LOGGER.debug("{}.close()", this);
     }
 
     @Override

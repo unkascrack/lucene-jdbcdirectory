@@ -7,32 +7,44 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 
-class DatabaseLuceneHandler {
+class DatabaseDirectoryHandler {
 
     private final DatabaseDirectory directory;
 
-    DatabaseLuceneHandler(final DatabaseDirectory directory) {
+    DatabaseDirectoryHandler(final DatabaseDirectory directory) {
         this.directory = directory;
     }
 
-    boolean isIndexTableExists() throws DatabaseStoreException {
+    /**
+     * @return
+     * @throws DatabaseStoreException
+     */
+    boolean existsIndexTable() throws DatabaseStoreException {
         final Connection connection = DataSourceUtils.getConnection(directory.getDataSource());
         final String sqlTableExists = directory.getDialect().sqlTableExists(directory.getIndexTableName());
-        return (boolean) JdbcTemplate.executeSelect(connection, sqlTableExists,
-                new JdbcTemplate.ExecuteSelectCallback() {
+        boolean exists = false;
+        try {
+            exists = (boolean) JdbcTemplate.executeSelect(connection, sqlTableExists,
+                    new JdbcTemplate.ExecuteSelectCallback() {
 
-                    @Override
-                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
-                        // do nothing
-                    }
+                        @Override
+                        public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                            // do nothing
+                        }
 
-                    @Override
-                    public Object execute(final ResultSet rs) throws Exception {
-                        return rs.next() ? rs.getBoolean(1) : false;
-                    }
-                });
+                        @Override
+                        public Object execute(final ResultSet rs) throws Exception {
+                            return rs.next() ? Boolean.TRUE : Boolean.FALSE;
+                        }
+                    });
+        } catch (final DatabaseStoreException e) {
+        }
+        return exists;
     }
 
+    /**
+     * @throws DatabaseStoreException
+     */
     void createIndexTable() throws DatabaseStoreException {
         final Connection connection = DataSourceUtils.getConnection(directory.getDataSource());
         final String sqlCreate = directory.getDialect().sqlTableCreate(directory.getIndexTableName());
@@ -45,6 +57,10 @@ class DatabaseLuceneHandler {
         });
     }
 
+    /**
+     * @return
+     * @throws DatabaseStoreException
+     */
     public String[] listAll() throws DatabaseStoreException {
         final Connection connection = DataSourceUtils.getConnection(directory.getDataSource());
         final String sqlListAll = directory.getDialect().sqlSelectAll(directory.getIndexTableName());
@@ -65,6 +81,10 @@ class DatabaseLuceneHandler {
         });
     }
 
+    /**
+     * @param name
+     * @throws DatabaseStoreException
+     */
     public void deleteFile(final String name) throws DatabaseStoreException {
         final Connection connection = DataSourceUtils.getConnection(directory.getDataSource());
         final String sqlDelete = directory.getDialect().sqlDeleteByName(directory.getIndexTableName());
@@ -72,16 +92,25 @@ class DatabaseLuceneHandler {
 
             @Override
             public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                ps.setFetchSize(1);
                 ps.setString(1, name);
             }
         });
     }
 
+    /**
+     * @param names
+     */
     void sync(final Collection<String> names) {
         // TODO Auto-generated method stub
 
     }
 
+    /**
+     * @param name
+     * @return
+     * @throws DatabaseStoreException
+     */
     public long fileLength(final String name) throws DatabaseStoreException {
         final Connection connection = DataSourceUtils.getConnection(directory.getDataSource());
         final String sqlSelectSize = directory.getDialect().sqlSelectSize(directory.getIndexTableName());
@@ -94,11 +123,16 @@ class DatabaseLuceneHandler {
 
             @Override
             public Object execute(final ResultSet rs) throws Exception {
-                return rs.next() ? rs.getLong(2) : null;
+                return rs.next() ? rs.getLong(1) : 0l;
             }
         });
     }
 
+    /**
+     * @param source
+     * @param dest
+     * @throws DatabaseStoreException
+     */
     public void renameFile(final String source, final String dest) throws DatabaseStoreException {
         final Connection connection = DataSourceUtils.getConnection(directory.getDataSource());
         final String sqlUpdateRename = directory.getDialect().sqlUpdateRename(directory.getIndexTableName());
@@ -106,6 +140,7 @@ class DatabaseLuceneHandler {
 
             @Override
             public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                ps.setFetchSize(1);
                 ps.setString(1, dest);
                 ps.setString(2, source);
             }
@@ -113,6 +148,11 @@ class DatabaseLuceneHandler {
 
     }
 
+    /**
+     * @param name
+     * @return
+     * @throws DatabaseStoreException
+     */
     public byte[] getContent(final String name) throws DatabaseStoreException {
         final Connection connection = DataSourceUtils.getConnection(directory.getDataSource());
         final String sqlSelectContent = directory.getDialect().sqlSelectContent(directory.getIndexTableName());
@@ -126,11 +166,17 @@ class DatabaseLuceneHandler {
 
                     @Override
                     public Object execute(final ResultSet rs) throws Exception {
-                        return rs.next() ? rs.getBytes(1) : null;
+                        return rs.next() ? rs.getBytes(1) : new byte[] {};
                     }
                 });
     }
 
+    /**
+     * @param name
+     * @param content
+     * @param contentLength
+     * @throws DatabaseStoreException
+     */
     public void save(final String name, final byte[] content, final int contentLength) throws DatabaseStoreException {
         final Connection connection1 = DataSourceUtils.getConnection(directory.getDataSource());
         final String sqlSelectName = directory.getDialect().sqlSelectName(directory.getIndexTableName());
@@ -159,10 +205,34 @@ class DatabaseLuceneHandler {
 
             @Override
             public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                ps.setFetchSize(1);
                 ps.setBinaryStream(1, new ByteArrayInputStream(content), contentLength);
                 ps.setInt(2, contentLength);
                 ps.setString(3, name);
             }
         });
+    }
+
+    /**
+     * @param name
+     * @return
+     * @throws DatabaseStoreException
+     */
+    public boolean existsFile(final String name) throws DatabaseStoreException {
+        final Connection connection = DataSourceUtils.getConnection(directory.getDataSource());
+        final String sqlSelectName = directory.getDialect().sqlSelectName(directory.getIndexTableName());
+        return (boolean) JdbcTemplate.executeSelect(connection, sqlSelectName,
+                new JdbcTemplate.ExecuteSelectCallback() {
+
+                    @Override
+                    public void fillPrepareStatement(final PreparedStatement ps) throws Exception {
+                        ps.setString(1, name);
+                    }
+
+                    @Override
+                    public Object execute(final ResultSet rs) throws Exception {
+                        return rs.next() ? Boolean.TRUE : Boolean.FALSE;
+                    }
+                });
     }
 }

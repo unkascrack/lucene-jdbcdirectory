@@ -1,1 +1,1 @@
-sql.table.exists=SELECT name FROM %s 
+sql.table.exists=SELECT count(*) FROM %s 

@@ -15,9 +15,4 @@ public class HSQLDialect extends Dialect {
         return true;
     }
 
-    @Override
-    public String sqlTableExists(final String tableName) {
-        return super.sqlTableExists(tableName);
-    }
-
 }

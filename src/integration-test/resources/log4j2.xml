@@ -13,6 +13,7 @@
 			<MarkerFilter marker="LOG4JDBC_OTHER" onMatch="DENY" onMismatch="NEUTRAL" />
 			<appender-ref ref="Console" />
 		</logger>
+		<Logger name="com.zaxxer.hikari" level="WARN"/>
 		<Root level="debug">
 			<AppenderRef ref="Console" />
 		</Root>

@@ -12,6 +12,11 @@ class DataSourceUtils {
     private DataSourceUtils() {
     }
 
+    /**
+     * @param dataSource
+     * @return
+     * @throws DatabaseStoreException
+     */
     static Connection getConnection(final DataSource dataSource) throws DatabaseStoreException {
         try {
             return dataSource.getConnection();
@@ -20,6 +25,10 @@ class DataSourceUtils {
         }
     }
 
+    /**
+     * @param connection
+     * @throws DatabaseStoreException
+     */
     static void releaseConnection(final Connection connection) throws DatabaseStoreException {
         if (connection != null) {
             try {

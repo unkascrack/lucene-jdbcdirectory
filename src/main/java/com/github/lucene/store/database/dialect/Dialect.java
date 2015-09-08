@@ -19,7 +19,7 @@ public abstract class Dialect {
     protected static final String PROPERTY_SQL_UPDATE_RENAME = "sql.update.rename";
     protected static final String PROPERTY_SQL_DELETE = "sql.delete";
 
-    private final Properties properties;
+    protected final Properties properties;
 
     public Dialect(final String dialectConfig) throws IOException {
         properties = new Properties();
@@ -50,15 +50,15 @@ public abstract class Dialect {
      * @param schemaName
      * @return
      */
-    public String sqlTableExists(final String tableName) {
-        throw new UnsupportedOperationException("Not sql provided to define if a table exists");
+    public final String sqlTableExists(final String tableName) {
+        return String.format(properties.getProperty(PROPERTY_SQL_TABLE_EXISTS), tableName);
     }
 
     /**
      * @param tableName
      * @return
      */
-    public String sqlTableCreate(final String tableName) {
+    public final String sqlTableCreate(final String tableName) {
         return String.format(properties.getProperty(PROPERTY_SQL_TABLE_CREATE), tableName);
     }
 
@@ -66,7 +66,7 @@ public abstract class Dialect {
      * @param tableName
      * @return
      */
-    public String sqlSelectAll(final String tableName) {
+    public final String sqlSelectAll(final String tableName) {
         return String.format(properties.getProperty(PROPERTY_SQL_SELECT_ALL), tableName);
     }
 
@@ -74,7 +74,7 @@ public abstract class Dialect {
      * @param tableName
      * @return
      */
-    public String sqlSelectName(final String tableName) {
+    public final String sqlSelectName(final String tableName) {
         return String.format(properties.getProperty(PROPERTY_SQL_SELECT_NAME), tableName);
     }
 
@@ -82,7 +82,7 @@ public abstract class Dialect {
      * @param tableName
      * @return
      */
-    public String sqlSelectSize(final String tableName) {
+    public final String sqlSelectSize(final String tableName) {
         return String.format(properties.getProperty(PROPERTY_SQL_SELECT_SIZE), tableName);
     }
 
@@ -90,7 +90,7 @@ public abstract class Dialect {
      * @param tableName
      * @return
      */
-    public String sqlSelectContent(final String tableName) {
+    public final String sqlSelectContent(final String tableName) {
         return String.format(properties.getProperty(PROPERTY_SQL_SELECT_CONTENT), tableName);
     }
 
@@ -98,7 +98,7 @@ public abstract class Dialect {
      * @param tableName
      * @return
      */
-    public String sqlInsert(final String tableName) {
+    public final String sqlInsert(final String tableName) {
         return String.format(properties.getProperty(PROPERTY_SQL_INSERT), tableName);
     }
 
@@ -106,7 +106,7 @@ public abstract class Dialect {
      * @param tableName
      * @return
      */
-    public String sqlUpdate(final String tableName) {
+    public final String sqlUpdate(final String tableName) {
         return String.format(properties.getProperty(PROPERTY_SQL_UPDATE), tableName);
     }
 
@@ -114,7 +114,7 @@ public abstract class Dialect {
      * @param tableName
      * @return
      */
-    public String sqlUpdateRename(final String tableName) {
+    public final String sqlUpdateRename(final String tableName) {
         return String.format(properties.getProperty(PROPERTY_SQL_UPDATE_RENAME), tableName);
     }
 
@@ -122,7 +122,7 @@ public abstract class Dialect {
      * @param tableName
      * @return
      */
-    public String sqlDeleteByName(final String tableName) {
+    public final String sqlDeleteByName(final String tableName) {
         return String.format(properties.getProperty(PROPERTY_SQL_DELETE), tableName);
     }
 }

@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JdbcTemplate {
+class JdbcTemplate {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JdbcTemplate.class);
 
@@ -58,16 +58,10 @@ public class JdbcTemplate {
             callback.fillPrepareStatement(ps);
             rs = ps.executeQuery();
             return callback.execute(rs);
-        } catch (final DatabaseStoreException e) {
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Failed to execute sql [" + sql + "]", e);
-            }
-            throw e;
         } catch (final Exception e) {
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Failed to execute sql [" + sql + "]", e);
-            }
-            throw new DatabaseStoreException("Failed to execute sql [" + sql + "]", e);
+            LOGGER.warn("DatabaseDirectory: failed to execute sql [{}]: e", sql, e.getMessage());
+            throw (DatabaseStoreException) (e instanceof DatabaseStoreException ? e
+                    : new DatabaseStoreException("Failed to execute sql [" + sql + "]", e));
         } finally {
             DataSourceUtils.closeResultSet(rs);
             DataSourceUtils.closeStatement(ps);
@@ -88,22 +82,35 @@ public class JdbcTemplate {
      */
     static void executeUpdate(final Connection connection, final String sql,
             final PrepateStatementAwareCallback callback) throws DatabaseStoreException {
+        executeUpdate(connection, sql, false, callback);
+    }
+
+    /**
+     * A template method to execute a simple sql update. The jdbc
+     * <code>Connection</code>, and <code>PreparedStatement</code> are managed
+     * by the template. A <code>PreparedStatement</code> can be used to set
+     * values to the given sql.
+     *
+     * @param connection
+     * @param sql
+     * @param commit
+     * @param callback
+     * @throws DatabaseStoreException
+     */
+    static void executeUpdate(final Connection connection, final String sql, final boolean commit,
+            final PrepateStatementAwareCallback callback) throws DatabaseStoreException {
         PreparedStatement ps = null;
         try {
             ps = connection.prepareStatement(sql);
-            // ps.setQueryTimeout(settings.getQueryTimeout());
             callback.fillPrepareStatement(ps);
             ps.executeUpdate();
-        } catch (final DatabaseStoreException e) {
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Failed to execute sql [" + sql + "]", e);
+            if (commit) {
+                connection.commit();
             }
-            throw e;
         } catch (final Exception e) {
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Failed to execute sql [" + sql + "]", e);
-            }
-            throw new DatabaseStoreException("Failed to execute sql [" + sql + "]", e);
+            LOGGER.warn("DatabaseDirectory: failed to execute sql [{}]: e", sql, e.getMessage());
+            throw (DatabaseStoreException) (e instanceof DatabaseStoreException ? e
+                    : new DatabaseStoreException("Failed to execute sql [" + sql + "]", e));
         } finally {
             DataSourceUtils.closeStatement(ps);
             DataSourceUtils.releaseConnection(connection);
