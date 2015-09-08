@@ -89,8 +89,7 @@ class DatabaseDirectoryHandler {
      * @param names
      */
     void syncFiles(final DatabaseDirectory directory, final Collection<String> names) {
-        // TODO Auto-generated method stub
-
+        // TODO Does nothing, will use transaction to commit the data
     }
 
     /**
@@ -126,7 +125,7 @@ class DatabaseDirectoryHandler {
             throws DatabaseStoreException {
         final Connection connection = DataSourceUtils.getConnection(directory.getDataSource());
         final String sqlUpdate = directory.getDialect().sqlUpdate(directory.getIndexTableName());
-        JdbcTemplate.executeUpdate(connection, sqlUpdate, false, new JdbcTemplate.PrepateStatementAwareCallback() {
+        JdbcTemplate.executeUpdate(connection, sqlUpdate, true, new JdbcTemplate.PrepateStatementAwareCallback() {
 
             @Override
             public void fillPrepareStatement(final PreparedStatement ps) throws Exception {

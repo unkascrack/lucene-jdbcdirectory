@@ -57,4 +57,15 @@ public class DatabaseLockFactoryITest extends AbstractContextIntegrationTests {
             lock.close();
         }
     }
+
+    @Test
+    public void obtainLock_whenLockFileFoundButIsClosed_shouldReturnNewLock() throws IOException {
+        final Lock lock1 = directory.obtainLock(IndexWriter.WRITE_LOCK_NAME);
+        Assert.assertNotNull(lock1);
+        lock1.close();
+
+        final Lock lock2 = directory.obtainLock(IndexWriter.WRITE_LOCK_NAME);
+        Assert.assertNotNull(lock2);
+        lock2.close();
+    }
 }

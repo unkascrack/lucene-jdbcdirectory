@@ -83,7 +83,7 @@ public class DatabaseDirectory extends Directory {
     @Override
     public void deleteFile(final String name) throws IOException {
         LOGGER.debug("{}.deleteFile({})", this, name);
-        handler.deleteFile(this, name, false);
+        handler.deleteFile(this, name, true);
     }
 
     @Override
